@@ -1,0 +1,14 @@
+{
+  "name": "spv",
+  "version": "1.0.0",
+  "main": "spv.js",
+  "author": "",
+  "license": "ISC",
+  "description": "Package for the Imperva Site Protection Viewer",
+  "dependencies": {
+    "async": "^2.6.1",
+    "node-datetime": "^2.0.6",
+    "request": "^2.88.0",
+    "request-promise": "^4.2.2"
+  }
+}
