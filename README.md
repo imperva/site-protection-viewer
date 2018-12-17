@@ -5,7 +5,7 @@ The output is an html file and (if configured) a csv file.
 
 # Usage
 ## Installtion
-1. Install nodejs
+1. Install [nodejs](https://nodejs.org/en/download/)
 2. Clone spv files to a directory of your choice
 3. In the install directory open a command prompt and run 'npm install'
 ## Configuration
