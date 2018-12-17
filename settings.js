@@ -3,7 +3,7 @@ module.exports = Object.freeze({
 	accountId: "", //  Your account ID - Mandatory
 	apiId: "", // Your api id - Mandatory
 	apiKey: "",  // Your api key - Mandatory
-	checkOriginServers: false, // When set to true, origin servers protection will be validated, this may take a longer time
+	checkOriginServers: true, // When set to true, origin servers protection will be validated, this may take a longer time
 
 	title: "", //When empty string it will use the account name as defined in MY
 

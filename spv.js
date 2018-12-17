@@ -66,10 +66,11 @@ if (validData == false)
 
 var fullPage = {sites: []};
 
-console.log("Start generating report with Origin Servers check - " + checkOriginServers);
+console.log("Start generating report");
+if (checkOriginServers)
+  console.log("Note that checkOriginServers = true. This means that total run time will be longer")
 
 //First function called
-
 getAllData(genericPostData, accountId, 0);
 
 function getAllData(commonPostData, accountId, pageNum)
@@ -238,7 +239,9 @@ function buildHtmlSummaryTable()
 function buildHtmlSumRow(siteSummaryObject)
 {
   var output;
-  output = '<tr>' + '<td align="left"><a href="#' + siteSummaryObject.site + '">' + siteSummaryObject.site + '</a></td>'
+  var wafConfigUrl = 'https://my.incapsula.com/sites/settings?isolated=true&accountId=' + siteSummaryObject.accountId + '&extSiteId=' + siteSummaryObject.siteId + '&fragment=section%3Dsettings_section_threats#section=settings&settings_section=settings_section_threats';
+  
+  output = '<tr>' + '<td align="left"><a href="' + wafConfigUrl + '">' + siteSummaryObject.site + '</a></td>'
   if (siteSummaryObject.status == statusOkString)
   {
     output += '<td align="left"><span class="greenText">Y</span></td>';
@@ -437,7 +440,7 @@ function createCsv()
   
   }
 
-  utils.saveToFile(fileName + '.csv', csvFileOutput);
+  utils.saveToFile(settings.filePath + fileName + '.csv', csvFileOutput);
 }
 
 
@@ -530,7 +533,7 @@ function buildOriginServersReport(domain, sitesOriginServersInfo)
 
 function buildPolicyReport(site, i)
 {
-  var siteSummary = {"site": "", "status": "", "hasTraffic": "", "blockBadBots": "Y",
+  var siteSummary = {"site": "", "siteId": "", "accountId": "", "status": "", "hasTraffic": "", "blockBadBots": "Y",
   "challengeSuspected": "Y", "backDoorProtection": "Y", "remoteFileInclusion" : "Y" ,"sqlInjection": "Y" ,"crossSiteScripting": "Y",
   "illegalResourceAccess": "Y", "ddosActivityMode": "Y", "origServerProtected": "Y"};
 
@@ -539,6 +542,8 @@ function buildPolicyReport(site, i)
   policyOutput += '<tr><th align="left">Policy</th> <th align="left">Current Setting</th> </tr>\n';
 
   siteSummary.site = site.domain;
+  siteSummary.siteId = site.site_id;
+  siteSummary.accountId = site.account_id;
   siteSummary.status = site.status;
 
   for (var k=0; k<site.security.waf.rules.length; k++)
