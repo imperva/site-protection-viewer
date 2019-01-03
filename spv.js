@@ -205,21 +205,26 @@ function getSitesInfo(commonPostData, siteData, originsData, informCaller)
   );
 }  
 
-function buildHtmlSummaryTable()
+function buildHtmlSummaryTable(isWebDDosPurchased)
 {
   var output = '<h2>Summary</h2>\n';
 
   output += '<table>\n';
   var statusString;
   var hasTrafficString;
-
+  var webDdosTitle = '<th align="left"><span class="redText">DDoS Not Purchased</span></th>';
   statusString = "Fully Configured";
   hasTrafficString = '';
 
   output += '<tr><th align="left">Site</th><th align="left">' + statusString + hasTrafficString + '<th align="left">Block bad bots</th><th align="left">Challenge Suspected</th><th align="left">Backdoor Protection</th>' +
-    '<th align="left">Remote file inclusion</th><th align="left">SQL injection</th><th align="left">Cross Site Scripting</th><th align="left">Ilegal Resource Access</th>' +
-    '<th align="left">DDoS Activity Mode</th>';
+    '<th align="left">Remote file inclusion</th><th align="left">SQL injection</th><th align="left">Cross Site Scripting</th><th align="left">Ilegal Resource Access</th>';
   
+  if (isWebDDosPurchased)
+    webDdosTitle = '<th align="left">DDoS</th>'
+  
+  output += webDdosTitle;
+  
+    
   //If checking orig servers
   if (checkOriginServers)
     output += '<th align="left">Origin Server Protected</th></tr>\n';
@@ -337,7 +342,7 @@ function buildHtml(siteData, originServersInfo, accountSubInfo)
     console.time("buildHtml end")
   var output = [];
   var sitesOutput = [];
-
+  
   if(theTitle == "")
     theTitle = accountSubInfo[0].accountName;
 
@@ -349,7 +354,6 @@ function buildHtml(siteData, originServersInfo, accountSubInfo)
   output += '<h1>' + theTitle + ' - (Account ID ' + accountId + ') - ' + timeNow.format('Y-m-d H:M:S') + '</h1>\n'
 
   output += '<p> Number of sites : ' + siteData.sites.length + '<\p>\n';
-
 
 
   //Sort by site name
@@ -367,7 +371,7 @@ function buildHtml(siteData, originServersInfo, accountSubInfo)
     var policyOutput = [];
     var origServerOutput = [];
 
-    policyOutput =  buildPolicyReport(site);
+    policyOutput =  buildPolicyReport(site, accountSubInfo[0].isWebDDosPurchased);
 
     if (checkOriginServers)
     {
@@ -383,7 +387,7 @@ function buildHtml(siteData, originServersInfo, accountSubInfo)
     sitesOutput += '</table>\n'
   }
 
-  output += buildHtmlSummaryTable();
+  output += buildHtmlSummaryTable(accountSubInfo[0].isWebDDosPurchased);
   if (checkOriginServers)
     output += buildOriginServerSummary(originServersInfo)
 
@@ -426,7 +430,7 @@ function createCsv()
     if (siteSummaryObject[i].status == statusOkString)
       statusVal = 'Y';
 
-    csvFileOutput += '0,' + siteSummaryObject[i].site + ',' +  statusVal + ',';
+    csvFileOutput += i + ',' + siteSummaryObject[i].site + ',' +  statusVal + ',';
     
     csvFileOutput +=siteSummaryObject[i].blockBadBots + ',' + siteSummaryObject[i].challengeSuspected + ',' + 
       siteSummaryObject[i].backDoorProtection + ',' +  siteSummaryObject[i].remoteFileInclusion + ',' + 
@@ -531,7 +535,7 @@ function buildOriginServersReport(domain, sitesOriginServersInfo)
   return (originServersOutput);
 }
 
-function buildPolicyReport(site, i)
+function buildPolicyReport(site, isWebDDosPurchased)
 {
   var siteSummary = {"site": "", "siteId": "", "accountId": "", "status": "", "hasTraffic": "", "blockBadBots": "Y",
   "challengeSuspected": "Y", "backDoorProtection": "Y", "remoteFileInclusion" : "Y" ,"sqlInjection": "Y" ,"crossSiteScripting": "Y",
@@ -553,7 +557,7 @@ function buildPolicyReport(site, i)
       continue;
     if (policy.id === 'api.threats.ddos')
     {
-      if (policy.activation_mode === 'api.threats.ddos.activation_mode.off')
+      if (isWebDDosPurchased == false || policy.activation_mode === 'api.threats.ddos.activation_mode.off')
       {
         policyOutput += '<tr><td align="left"><span class="blackText">' + policy.name + '</span></td> <td align="left"><span class="redText">Not Protected</span></td></tr>\n';
         setSecurityIssue(site.domain, "policy", policy.name, policy.activation_mode_text);

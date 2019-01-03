@@ -50,7 +50,8 @@ function getAccountSubInfo(commonPostData, accountId, accountSubInfoOutput, info
 
 	request(options)
 	.then(function (response) {
-		var hasTraffic = false;
+		var isWebDDosPurchased = false;
+
 		var jResponse = JSON.parse(response);
 		if (jResponse.res != 0)
         {
@@ -58,7 +59,18 @@ function getAccountSubInfo(commonPostData, accountId, accountSubInfoOutput, info
           return;
         }
 
-		accountSubInfoOutput.push({"accountName": jResponse.planStatus.accountName});
+		// Get DDoS purchae status
+		for (var i = 0; i < jResponse.planStatus.additionalServices.planSectionRows.length; i++)
+		{
+			if (jResponse.planStatus.additionalServices.planSectionRows[i].name == "DDoS Protection")
+			{
+				if (jResponse.planStatus.additionalServices.planSectionRows[i].purchased != "None")
+					isWebDDosPurchased = true;
+			}
+		}
+
+		accountSubInfoOutput.push({"accountName": jResponse.planStatus.accountName, "isWebDDosPurchased": isWebDDosPurchased});
+
 		informCaller();
 	})
 	.catch(function (err) {
