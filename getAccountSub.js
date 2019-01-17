@@ -5,24 +5,6 @@ var async = require('async');
 //Set since Incapsula API has a limited number of concurrent connections
 var numConcurrentConnections = 15;
 
-
-function getAccountSubInfo1(commonPostData, siteData, statsOutput, statsRawOutput, informCaller)
-{
-	console.log("getSitesStats");
-	console.time("getSitesStats - total time");
-	async.forEachLimit(siteData, numConcurrentConnections, function(site, cb){
-		getSiteTraffic(commonPostData, site.domain, site.site_id, statsOutput, statsRawOutput, cb);
-	}, function(err){
-		if (err){
-			//deal with the error
-			console.log("getSitesStats error")
-		}
-		console.timeEnd("getSitesStats - total time")
-		informCaller();
-	});
-}
-  
-
 function getAccountSubInfo(commonPostData, accountId, accountSubInfoOutput, informCaller)
 {
 	var postData = {};
@@ -50,7 +32,7 @@ function getAccountSubInfo(commonPostData, accountId, accountSubInfoOutput, info
 
 	request(options)
 	.then(function (response) {
-		var isWebDDosPurchased = false;
+		var isWebVolDDosPurchased = false;
 
 		var jResponse = JSON.parse(response);
 		if (jResponse.res != 0)
@@ -59,17 +41,17 @@ function getAccountSubInfo(commonPostData, accountId, accountSubInfoOutput, info
           return;
         }
 
-		// Get DDoS purchae status
+		// Get Volumetric DDoS purchase status
 		for (var i = 0; i < jResponse.planStatus.additionalServices.planSectionRows.length; i++)
 		{
 			if (jResponse.planStatus.additionalServices.planSectionRows[i].name == "DDoS Protection")
 			{
 				if (jResponse.planStatus.additionalServices.planSectionRows[i].purchased != "None")
-					isWebDDosPurchased = true;
+					isWebVolDDosPurchased = true;
 			}
 		}
 
-		accountSubInfoOutput.push({"accountName": jResponse.planStatus.accountName, "isWebDDosPurchased": isWebDDosPurchased});
+		accountSubInfoOutput.push({"accountName": jResponse.planStatus.accountName, "isWebVolDDosPurchased": isWebVolDDosPurchased});
 
 		informCaller();
 	})

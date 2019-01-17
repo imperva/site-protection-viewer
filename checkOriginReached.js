@@ -13,7 +13,7 @@ var totalNumServers = 0;
 //Getting arguments
 function checkSiteDataReportPar(originData, originDataOutpt, informCaller)
 {
-	console.log("Check " + originData.length + " Origin Servers - this may take a while");
+	console.log("Check " + originData.length/2 + " Origin Servers access (http & https) - this may take a while");
 	totalNumServers = originData.length;
 	if(settings.printDebugInfo)
 		console.time("Check Origin Servers - total time");

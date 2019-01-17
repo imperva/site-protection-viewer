@@ -205,25 +205,20 @@ function getSitesInfo(commonPostData, siteData, originsData, informCaller)
   );
 }  
 
-function buildHtmlSummaryTable(isWebDDosPurchased)
+function buildHtmlSummaryTable(isWebVolDDosPurchased)
 {
   var output = '<h2>Summary</h2>\n';
 
   output += '<table>\n';
   var statusString;
   var hasTrafficString;
-  var webDdosTitle = '<th align="left"><span class="redText">DDoS Not Purchased</span></th>';
   statusString = "Fully Configured";
   hasTrafficString = '';
 
   output += '<tr><th align="left">Site</th><th align="left">' + statusString + hasTrafficString + '<th align="left">Block bad bots</th><th align="left">Challenge Suspected</th><th align="left">Backdoor Protection</th>' +
-    '<th align="left">Remote file inclusion</th><th align="left">SQL injection</th><th align="left">Cross Site Scripting</th><th align="left">Ilegal Resource Access</th>';
-  
-  if (isWebDDosPurchased)
-    webDdosTitle = '<th align="left">DDoS</th>'
-  
-  output += webDdosTitle;
-  
+    '<th align="left">Remote file inclusion</th><th align="left">SQL injection</th><th align="left">Cross Site Scripting</th><th align="left">Ilegal Resource Access</th>' +
+    '<th align="left">DDoS Activity</th><th align="left">Volumetric DDoS</th>';
+    
     
   //If checking orig servers
   if (checkOriginServers)
@@ -294,6 +289,13 @@ function buildHtmlSumRow(siteSummaryObject)
     output += htmlVStr;
   else
     output += htmlXStr;
+
+  if (siteSummaryObject.isWebVolDDosPurchased == 'Y')
+    output += htmlVStr;
+  else
+    output += htmlXStr;
+
+
 
   if (checkOriginServers)
   {
@@ -371,7 +373,7 @@ function buildHtml(siteData, originServersInfo, accountSubInfo)
     var policyOutput = [];
     var origServerOutput = [];
 
-    policyOutput =  buildPolicyReport(site, accountSubInfo[0].isWebDDosPurchased);
+    policyOutput =  buildPolicyReport(site, accountSubInfo[0].isWebVolDDosPurchased);
 
     if (checkOriginServers)
     {
@@ -387,9 +389,12 @@ function buildHtml(siteData, originServersInfo, accountSubInfo)
     sitesOutput += '</table>\n'
   }
 
-  output += buildHtmlSummaryTable(accountSubInfo[0].isWebDDosPurchased);
+  output += buildHtmlSummaryTable(accountSubInfo[0].isWebVolDDosPurchased);
   if (checkOriginServers)
     output += buildOriginServerSummary(originServersInfo)
+
+  if (settings.showFullDetails)
+    output += sitesOutput;
 
   output += '</body></html>\n'
  
@@ -417,10 +422,10 @@ function buildHtml(siteData, originServersInfo, accountSubInfo)
 function createCsv()
 {
   var csvFileOutput = 'Index,Site,Is Fully Configured,';
-  csvFileOutput += 'Block bad bots,Challenge Suspected,Backdoor Protection,Remote file inclusion,SQL injection,Cross Site Scripting,Ilegal Resource Access,DDoS Activity Mode,';
+  csvFileOutput += 'Block bad bots,Challenge Suspected,Backdoor Protection,Remote file inclusion,SQL injection,Cross Site Scripting,Ilegal Resource Access,DDoS Activity Mode,Volumetric DDoS';
 
   if (checkOriginServers)
-    csvFileOutput += 'Origin Servers Protected\r\n';
+    csvFileOutput += ',Origin Servers Protected\r\n';
   else
     csvFileOutput += '\r\n';
 
@@ -435,7 +440,8 @@ function createCsv()
     csvFileOutput +=siteSummaryObject[i].blockBadBots + ',' + siteSummaryObject[i].challengeSuspected + ',' + 
       siteSummaryObject[i].backDoorProtection + ',' +  siteSummaryObject[i].remoteFileInclusion + ',' + 
       siteSummaryObject[i].sqlInjection + ',' + siteSummaryObject[i].crossSiteScripting + ',' + 
-      siteSummaryObject[i].illegalResourceAccess + ',' + siteSummaryObject[i].ddosActivityMode;
+      siteSummaryObject[i].illegalResourceAccess + ',' + siteSummaryObject[i].ddosActivityMode + ',' + 
+      siteSummaryObject[i].isWebVolDDosPurchased;
 
     if (checkOriginServers)
       csvFileOutput += ',' + siteSummaryObject[i].origServerProtected + '\r\n';
@@ -516,14 +522,23 @@ function buildOriginServersReport(domain, sitesOriginServersInfo)
   if (origServers)
   {
     originServersOutput += '<table border="1">';
-    originServersOutput += '<tr><th align="left">Origin Server</th> <th align="left">Is Protected</th><th  align="left">Code</th> </tr>\n';
+    originServersOutput += '<tr><th align="left">Origin Server</th> <th align="left">Protocol</th><th align="left">Is Protected</th><th align="left">Code</th> </tr>\n';
     for (var i = 0; i < origServers.length; i++)
     {
       if (origServers[i].isProtected == true)
-        originServersOutput += '<tr><td align="left"><span class="blackText">' + origServers[i].serverName + '</span></td> <td align="left"><span class="greenText">Yes</span></td></span></td><td align="left"><span class="blackText">' + origServers[i].code + '</span></td></tr>\n';
+        originServersOutput += '<tr><td align="left"><span class="blackText">' + origServers[i].serverName + '</span></td>' +
+          '<td align="left"><span class="blackText">' + origServers[i].protocol + '</span></td>' + 
+          '<td align="left"><span class="greenText">Yes</span></td></span></td><td align="left">' +
+          '<span class="blackText">' + origServers[i].code + '</span></td></tr>\n';
       else
       {
-        originServersOutput += '<tr><td align="left"><span class="blackText">' + origServers[i].serverName + '</span></td> <td align="left"><span class="redText">No</span></td></span></td><td align="left"><span class="blackText">' + origServers[i].code + '</span></td></tr>\n';
+        originServersOutput += '<tr><td align="left"><span class="blackText">' + origServers[i].serverName + '</span></td>' +
+          '<td align="left"><span class="blackText">' + origServers[i].protocol + '</span></td>' + 
+          '<td align="left"><span class="redText">No</span></td>' +
+          '<td align="left"><span class="blackText">' + origServers[i].code + '</span></td></tr>\n';
+
+
+        //        originServersOutput += '<tr><td align="left"><span class="blackText">' + origServers[i].serverName + '</span></td> <td align="left"><span class="redText">No</span></td></span></td><td align="left"><span class="blackText">' + origServers[i].code + '</span></td></tr>\n';
         setSecurityIssue(domain, "originServer", origServers[i].serverName, "Accessable")
         setOrigServerNotProtectedInHtmlSummaryTable(domain);
       }
@@ -535,7 +550,110 @@ function buildOriginServersReport(domain, sitesOriginServersInfo)
   return (originServersOutput);
 }
 
-function buildPolicyReport(site, isWebDDosPurchased)
+function buildPolicyReport(site, isWebVolDDosPurchased)
+{
+  var siteSummary = {"site": "", "siteId": "", "accountId": "", "status": "", "hasTraffic": "", "blockBadBots": "Y",
+  "challengeSuspected": "Y", "backDoorProtection": "Y", "remoteFileInclusion" : "Y" ,"sqlInjection": "Y" ,"crossSiteScripting": "Y",
+  "illegalResourceAccess": "Y", "ddosActivityMode": "Y", "isWebVolDDosPurchased": "Y", "origServerProtected": "Y"};
+
+  var policyOutput = '<h3>Security Policies</h3>\n' 
+  policyOutput += '<table border="1">\n';
+  policyOutput += '<tr><th align="left">Policy</th> <th align="left">Current Setting</th> </tr>\n';
+
+  siteSummary.site = site.domain;
+  siteSummary.siteId = site.site_id;
+  siteSummary.accountId = site.account_id;
+  siteSummary.status = site.status;
+
+  for (var k=0; k<site.security.waf.rules.length; k++)
+  {
+    var policy = site.security.waf.rules[k]; 
+    if (policy == null)
+      continue;
+
+    var displayPolicy = utils.getDisplayPolicy(policy.id);
+    if (policy.id === 'api.threats.ddos')
+    {
+      if (policy.activation_mode === displayPolicy.activation_mode)
+      {
+        policyOutput += '<tr><td align="left"><span class="blackText">' + policy.name + '</span></td> <td align="left"><span class="redText">Not Protected</span></td></tr>\n';
+        setSecurityIssue(site.domain, "policy", policy.name, policy.activation_mode_text);
+
+        siteSummary.ddosActivityMode = "N";
+      }
+      else
+        policyOutput += '<tr><td align="left"><span class="blackText">' + policy.name + '</span></td> <td align="left"><span class="greenText">Protected</span></td></tr>\n';
+    }
+    else if (policy.id === 'api.threats.bot_access_control')
+    {
+      if (policy.block_bad_bots != displayPolicy.block_bad_bots)
+      //if (policy.block_bad_bots === false)
+      {
+        policyOutput += '<tr><td align="left"><span class="blackText">Bot Access Control</span></td> <td><span class="redText">Ignore</span></td></tr>\n';
+        setSecurityIssue(site.domain, "policy", "Bot Access Control", policy.block_bad_bots);
+      
+        siteSummary.blockBadBots = "N";
+      }
+      else
+        policyOutput += '<tr><td align="left"><span class="blackText">Bot Access Control</span></td> <td><span class="greenText">Block Request</span></td></tr>\n';
+
+      if (policy.challenge_suspected_bots != displayPolicy.challenge_suspected_bots)
+//        if (policy.challenge_suspected_bots == true)
+        policyOutput += '<tr><td align="left">Challenge Suspected Bots</td> <td><span class="orangeText">Captcha Challenge</span></td></tr>\n';
+      else
+      {
+        policyOutput += '<tr><td align="left">Challenge Suspected Bots</td> <td><span class="orangeText">Ignore</span></td></tr>\n';
+      }
+    }
+    else if (policy.id === "api.threats.customRule")
+    {
+      //Ignore IncapRules
+    }
+    else
+    {
+      if (policy.action != displayPolicy.action)
+      {
+        policyOutput += '<tr><td align="left"><span class="blackText">' + policy.name + '</span></td> <td><span class="redText">' + policy.action_text + '</span></td></tr>\n';
+        setSecurityIssue(site.domain.name, "policy", policy.name,  policy.action_text);
+        
+        if (policy.id === "api.threats.sql_injection")
+          siteSummary.sqlInjection = "N";
+        else if (policy.id === "api.threats.cross_site_scripting")
+          siteSummary.crossSiteScripting = "N";
+        else if (policy.id === "api.threats.illegal_resource_access")
+          siteSummary.illegalResourceAccess = "N";
+        else if (policy.id === "api.threats.api.threats.backdoor")
+          siteSummary.backDoorProtection = "N";
+        else if (policy.id === "api.threats.remote_file_inclusion")
+          siteSummary.remoteFileInclusion = "N";
+      }
+      else
+        policyOutput += '<tr><td align="left"><span class="blackText">' + policy.name + '</span></td> <td><span class="greenText">' + policy.action_text + '</span></td></tr>\n';
+    }
+
+  }
+  if (!isWebVolDDosPurchased)
+  {
+    policyOutput += '<tr><td align="left"><span class="blackText"> Volumetric DDoS</span></td> <td align="left"><span class="redText">Not Protected</span></td></tr>\n';
+    setSecurityIssue(site.domain, "policy", policy.name, policy.activation_mode_text);
+
+    siteSummary.isWebVolDDosPurchased = "N";
+  }
+  else
+    policyOutput += '<tr><td align="left"><span class="blackText">Volumetric DDoS</span></td> <td align="left"><span class="greenText">Protected</span></td></tr>\n';
+
+
+
+
+  policyOutput += '</table>';
+
+  //Set in global summary struct
+  siteSummaryObject.push(siteSummary)
+
+  return (policyOutput);  
+}
+
+function buildPolicyReport1(site, isWebVolDDosPurchased)
 {
   var siteSummary = {"site": "", "siteId": "", "accountId": "", "status": "", "hasTraffic": "", "blockBadBots": "Y",
   "challengeSuspected": "Y", "backDoorProtection": "Y", "remoteFileInclusion" : "Y" ,"sqlInjection": "Y" ,"crossSiteScripting": "Y",
@@ -557,7 +675,7 @@ function buildPolicyReport(site, isWebDDosPurchased)
       continue;
     if (policy.id === 'api.threats.ddos')
     {
-      if (isWebDDosPurchased == false || policy.activation_mode === 'api.threats.ddos.activation_mode.off')
+      if (isWebVolDDosPurchased == false || policy.activation_mode === 'api.threats.ddos.activation_mode.off')
       {
         policyOutput += '<tr><td align="left"><span class="blackText">' + policy.name + '</span></td> <td align="left"><span class="redText">Not Protected</span></td></tr>\n';
         setSecurityIssue(site.domain, "policy", policy.name, policy.activation_mode_text);
@@ -622,7 +740,6 @@ function buildPolicyReport(site, isWebDDosPurchased)
 
   return (policyOutput);  
 }
-
 
 function setSecurityIssue(domain, type, subject, reason)
 {
