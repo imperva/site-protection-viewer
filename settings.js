@@ -16,8 +16,9 @@ module.exports = Object.freeze({
 
 // Advanced configuration
 
-/* These settings will defines per rule if protected. Per rule (id). The received paramters values are compared and if equal to 
-	the value of the parameter, it means it is 'protected'. */
+/* These settings will defines per rule if protected. Per rule (id). The received paramters values from the API are compared and if equal to 
+	the value of the parameter, it means it that the field will be displayed as 'protected'. 
+*/
 	protectionDisplay : [
 		{
 			"action": "api.threats.action.block_request",
@@ -41,7 +42,11 @@ module.exports = Object.freeze({
 			"id": "api.threats.bot_access_control",
 		},
 		{
-			"activation_mode": "api.threats.ddos.activation_mode.on",
+//ddos is a special case since there is more than one value. Currently code is changed only for this field but can be used as an example if others are required in the future
+			"value" :  [
+				{"activation_mode": "api.threats.ddos.activation_mode.on"},
+				{"activation_mode": "api.threats.ddos.activation_mode.auto"},
+			],
 			"id": "api.threats.ddos",
 		},
 		{

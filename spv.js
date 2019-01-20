@@ -380,7 +380,7 @@ function buildHtml(siteData, originServersInfo, accountSubInfo)
       origServerOutput = buildOriginServersReport(site.domain, originServersInfo);
     }
 
-    sitesOutput += '<h3 id="' + site.domain + '"><span class="brownText">' + site.domain + '</span></h2>\n';
+    sitesOutput += '<h3 id="' + site.domain + '"><span class="brownText">' + site.domain + '</span></h3>\n';
     
     
     sitesOutput += '<table border="1" cellspacing="20">';
@@ -394,7 +394,10 @@ function buildHtml(siteData, originServersInfo, accountSubInfo)
     output += buildOriginServerSummary(originServersInfo)
 
   if (settings.showFullDetails)
+  {
+    output += '<h2>Full Details</h2>\n';
     output += sitesOutput;
+  }
 
   output += '</body></html>\n'
  
@@ -456,7 +459,7 @@ function createCsv()
 
 function buildOriginServerSummary(sitesOriginServersInfo)
 {
-  var originServersOutput = '<h2>Origin Servers</h3>\n';
+  var originServersOutput = '<h2>Origin Servers</h2>\n';
   var originServerStatusStr;
   var domainStr = "";
   
@@ -507,7 +510,7 @@ function buildOriginServerSummary(sitesOriginServersInfo)
 
 function buildOriginServersReport(domain, sitesOriginServersInfo)
 {
-  var originServersOutput = '<h3>Origin Servers</h3>'
+  var originServersOutput = '\n<h3>Origin Servers</h3>\n'
   var origServers = null;
   for (var i = 0; i < sitesOriginServersInfo.originServers.length; i++)
   {
@@ -567,6 +570,7 @@ function buildPolicyReport(site, isWebVolDDosPurchased)
 
   for (var k=0; k<site.security.waf.rules.length; k++)
   {
+    var ddosProtected = false;
     var policy = site.security.waf.rules[k]; 
     if (policy == null)
       continue;
@@ -574,20 +578,28 @@ function buildPolicyReport(site, isWebVolDDosPurchased)
     var displayPolicy = utils.getDisplayPolicy(policy.id);
     if (policy.id === 'api.threats.ddos')
     {
-      if (policy.activation_mode === displayPolicy.activation_mode)
+      // Special case since there is more than one value that can define 'protected'
+      //console.log("policy.activation_mode " + policy.activation_mode + " || displayPolicy.activation_mode " +  displayPolicy.value + " || policy.activation_mode_text " + policy.activation_mode_text)
+      for (var i = 0; i < displayPolicy.value.length; i++)
       {
-        policyOutput += '<tr><td align="left"><span class="blackText">' + policy.name + '</span></td> <td align="left"><span class="redText">Not Protected</span></td></tr>\n';
+        if (policy.activation_mode === displayPolicy.value[i].activation_mode)
+        {
+          ddosProtected = true;
+        }
+      }
+      if (!ddosProtected)
+      {
+        policyOutput += '<tr><td align="left"><span class="blackText">DDoS Activity</span></td> <td align="left"><span class="redText">' + policy.activation_mode_text + '</span></td></tr>\n';
         setSecurityIssue(site.domain, "policy", policy.name, policy.activation_mode_text);
 
         siteSummary.ddosActivityMode = "N";
       }
       else
-        policyOutput += '<tr><td align="left"><span class="blackText">' + policy.name + '</span></td> <td align="left"><span class="greenText">Protected</span></td></tr>\n';
+        policyOutput += '<tr><td align="left"><span class="blackText">DDoS Activity</span></td> <td align="left"><span class="greenText">' + policy.activation_mode_text + '</span></td></tr>\n';
     }
     else if (policy.id === 'api.threats.bot_access_control')
     {
       if (policy.block_bad_bots != displayPolicy.block_bad_bots)
-      //if (policy.block_bad_bots === false)
       {
         policyOutput += '<tr><td align="left"><span class="blackText">Bot Access Control</span></td> <td><span class="redText">Ignore</span></td></tr>\n';
         setSecurityIssue(site.domain, "policy", "Bot Access Control", policy.block_bad_bots);
@@ -598,7 +610,6 @@ function buildPolicyReport(site, isWebVolDDosPurchased)
         policyOutput += '<tr><td align="left"><span class="blackText">Bot Access Control</span></td> <td><span class="greenText">Block Request</span></td></tr>\n';
 
       if (policy.challenge_suspected_bots != displayPolicy.challenge_suspected_bots)
-//        if (policy.challenge_suspected_bots == true)
         policyOutput += '<tr><td align="left">Challenge Suspected Bots</td> <td><span class="orangeText">Captcha Challenge</span></td></tr>\n';
       else
       {
