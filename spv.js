@@ -646,8 +646,6 @@ function buildPolicyReport(site, isWebVolDDosPurchased)
   if (!isWebVolDDosPurchased)
   {
     policyOutput += '<tr><td align="left"><span class="blackText"> Volumetric DDoS</span></td> <td align="left"><span class="redText">Not Protected</span></td></tr>\n';
-    setSecurityIssue(site.domain, "policy", policy.name, policy.activation_mode_text);
-
     siteSummary.isWebVolDDosPurchased = "N";
   }
   else
