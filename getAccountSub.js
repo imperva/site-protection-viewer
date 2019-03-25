@@ -1,9 +1,29 @@
 var request = require('request-promise');
 var querystring = require('querystring');
 var async = require('async');
+var settings = require('./settings.js');
 
-//Set since Incapsula API has a limited number of concurrent connections
-var numConcurrentConnections = 15;
+function getAccountSubInfoList(commonPostData, accountList, accountSubInfoOutput, informCaller)
+{
+	totalNumAccounts = accountList.length;
+	if(settings.printDebugInfo)
+		console.time("Get account info - total time");
+
+	async.forEachLimit(accountList, settings.numConcurrentConnections, function(account, cb){
+		getAccountSubInfo(commonPostData, account.accountId, accountSubInfoOutput, cb);
+	}, function(err){
+		if (err){
+			//deal with the error
+			console.log("error in checking sites")
+			informCaller();
+		}
+		if(settings.printDebugInfo)
+			console.timeEnd("Get account info - total time")
+
+		informCaller();
+	});
+}
+
 
 function getAccountSubInfo(commonPostData, accountId, accountSubInfoOutput, informCaller)
 {
@@ -33,7 +53,6 @@ function getAccountSubInfo(commonPostData, accountId, accountSubInfoOutput, info
 	request(options)
 	.then(function (response) {
 		var isWebVolDDosPurchased = false;
-
 		var jResponse = JSON.parse(response);
 		if (jResponse.res != 0)
         {
@@ -50,8 +69,7 @@ function getAccountSubInfo(commonPostData, accountId, accountSubInfoOutput, info
 					isWebVolDDosPurchased = true;
 			}
 		}
-
-		accountSubInfoOutput.push({"accountName": jResponse.planStatus.accountName, "isWebVolDDosPurchased": isWebVolDDosPurchased});
+		accountSubInfoOutput.push({"accountId": jResponse.planStatus.accountId, "accountName": jResponse.planStatus.accountName, "isWebVolDDosPurchased": isWebVolDDosPurchased});
 
 		informCaller();
 	})
@@ -64,3 +82,4 @@ function getAccountSubInfo(commonPostData, accountId, accountSubInfoOutput, info
 
 
 module.exports.getAccountSubInfo = getAccountSubInfo;
+module.exports.getAccountSubInfoList = getAccountSubInfoList;

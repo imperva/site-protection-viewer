@@ -14,6 +14,7 @@ The output is an html file and (if configured) a csv file.
    - **apiId** (mandatory)- your API ID which you can generate as described in the [API Key Management](https://docs.incapsula.com/Content/management-console-and-settings/api-keys.htm) page
    - **apiKey** (mandatory) - Your API_KEY which you can generate as described in the [API Key Management](https://docs.incapsula.com/Content/management-console-and-settings/api-keys.htm) page
    - **checkOriginServers** (default true)- *true* if you want to check origin server access, running of the tool will take longer, depending on number of origin servers; *false* if you don't
+   - **getSubAccountsInfo** (default true)- *true* if you want to get sub account names, running of the tool will take longer, depending on number of origin servers; *false* if you don't
    - **showFullDetails** (default false) - *true* - provides a table per website with detailed information
    - **title** (default name of account) - the title of the web page
    - **fileName** (default name of account) - the filename
@@ -22,6 +23,8 @@ The output is an html file and (if configured) a csv file.
    - **saveCsv** (default true) - *true* if you want a csv file as well as an html file
    - **protectionDisplay** - Use these settings to control the display of whether a setting is considered protected or not.
    - **printDebugInfo** - (default false) - *true* to print debug info during execution	
+   - **numConcurrentConnections** - (default 15) - Number of concurrent open API sessions	
+   
 ## Run tool
 5.  In the project directory run command: 'node spv'
 6.  Output files can be found in the configured filePath

@@ -4,6 +4,7 @@ module.exports = Object.freeze({
 	apiId: "", // Your api id - Mandatory
 	apiKey: "",  // Your api key - Mandatory
 	checkOriginServers: true, // When set to true, origin servers protection will be validated, this may take a longer time
+	getSubAccountsInfo:true, // When set to true, Sub accounts are also listed, this may take a longer time
 	showFullDetails: false, // When set to true, the setting details are listed per site
 
 	title: "", //When empty string it will use the account name as defined in MY
@@ -60,6 +61,7 @@ module.exports = Object.freeze({
 	],
 
 	printDebugInfo: false,
+    numConcurrentConnections: 15, //Number of concurrent open API sessions
 	pageSize: 100 //Internal usage
 
 });

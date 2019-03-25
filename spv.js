@@ -11,6 +11,10 @@ var utils = require("./utils");
 
 var uprotectedSitesInfo = [];
 var siteSummaryObject = [];
+var subAccountIds = [];
+var subAccountsOutput = [];
+//Used for display purposes
+var prevAccountName = '';
 
 var fileName;
 var pageSize = 100;
@@ -38,6 +42,7 @@ var accountId = settings.accountId;
 var theTitle = settings.title;
 var theFile = settings.fileName;
 var checkOriginServers = settings.checkOriginServers;
+var getSubAccountsInfo = settings.getSubAccountsInfo;
 
 
 var validData = true;
@@ -69,6 +74,8 @@ var fullPage = {sites: []};
 console.log("Start generating report");
 if (checkOriginServers)
   console.log("Note that checkOriginServers = true. This means that total run time will be longer")
+if (getSubAccountsInfo)
+  console.log("Note that getSubAccountsInfo = true. This means that total run time will be longer")
 
 //First function called
 getAllData(genericPostData, accountId, 0);
@@ -166,8 +173,10 @@ function buildHtmlReport(commonPostData, siteData)
       originsData.push({'Name':  siteData.sites[i].domain, 'Protocol': 'https', 'serverName': siteData.sites[i].ips[j]});
       originsData.push({'Name':  siteData.sites[i].domain, 'Protocol': 'http', 'serverName': siteData.sites[i].ips[j]});
     }
+
+    addSubAccountIdId(siteData.sites[i].account_id)
   }
-  // Async call to get all relevant info from different sources
+  // Async call to get all relevant info from different sources  
   getSitesInfo(commonPostData, siteData, originsData);
 }
 
@@ -175,11 +184,15 @@ function buildHtmlReport(commonPostData, siteData)
 function getSitesInfo(commonPostData, siteData, originsData, informCaller)
 {
   var origServerStatusOutpt = {originServers: []};
-  var accountSubInfoOutput = [];
+  var mainAccountInfo = [];
   if(settings.printDebugInfo)
     console.time("Get Site Info time")
   async.parallel(
     [ 
+      function(callback) {
+        //Get main account info
+        getAccountSub.getAccountSubInfo(commonPostData, accountId, mainAccountInfo, callback);
+      },
       function(callback) {
         //Get origin server info
         if (checkOriginServers)
@@ -188,8 +201,11 @@ function getSitesInfo(commonPostData, siteData, originsData, informCaller)
           callback();
       },
       function(callback) {
-        getAccountSub.getAccountSubInfo(commonPostData, accountId, accountSubInfoOutput, callback);
-          //callback();
+        //Get sub account info
+        if (getSubAccountsInfo)
+          getAccountSub.getAccountSubInfoList(commonPostData, subAccountIds, subAccountsOutput, callback);
+        else
+          callback();
       },
     ], 
     function done(err, results) {
@@ -199,8 +215,7 @@ function getSitesInfo(commonPostData, siteData, originsData, informCaller)
       
       if(settings.printDebugInfo)
         console.timeEnd("Get Site Info time");
-  
-      buildHtml(siteData, origServerStatusOutpt, accountSubInfoOutput);
+      buildHtml(siteData, origServerStatusOutpt, mainAccountInfo, subAccountsOutput);
     }
   );
 }  
@@ -214,11 +229,13 @@ function buildHtmlSummaryTable(isWebVolDDosPurchased)
   var hasTrafficString;
   statusString = "Fully Configured";
   hasTrafficString = '';
-
-  output += '<tr><th align="left">Site</th><th align="left">' + statusString + hasTrafficString + '<th align="left">Block bad bots</th><th align="left">Challenge Suspected</th><th align="left">Backdoor Protection</th>' +
+  output += '<tr>';
+  if (getSubAccountsInfo)
+    output += '<th align="left">Account</th>';
+    
+  output += '<th align="left">Site</th><th align="left">' + statusString + hasTrafficString + '<th align="left">Block bad bots</th><th align="left">Challenge Suspected</th><th align="left">Backdoor Protection</th>' +
     '<th align="left">Remote file inclusion</th><th align="left">SQL injection</th><th align="left">Cross Site Scripting</th><th align="left">Ilegal Resource Access</th>' +
     '<th align="left">DDoS Activity</th><th align="left">Volumetric DDoS</th>';
-    
     
   //If checking orig servers
   if (checkOriginServers)
@@ -239,9 +256,23 @@ function buildHtmlSummaryTable(isWebVolDDosPurchased)
 function buildHtmlSumRow(siteSummaryObject)
 {
   var output;
+  var dispalyAccountName = "";
   var wafConfigUrl = 'https://my.incapsula.com/sites/settings?isolated=true&accountId=' + siteSummaryObject.accountId + '&extSiteId=' + siteSummaryObject.siteId + '&fragment=section%3Dsettings_section_threats#section=settings&settings_section=settings_section_threats';
+  var accountUrl = 'https://my.incapsula.com/sites?accountId=' + siteSummaryObject.accountId;
+
+  output = '<tr>' 
+  if (getSubAccountsInfo)
+  {
+    if (prevAccountName != siteSummaryObject.accountName)
+    {
+      dispalyAccountName = '<a href="' + accountUrl + '">' + siteSummaryObject.accountName + '</a>'
+      prevAccountName = siteSummaryObject.accountName;
+    }
+    output += '<td align="left">' + dispalyAccountName + '</td>'; 
+  } 
   
-  output = '<tr>' + '<td align="left"><a href="' + wafConfigUrl + '">' + siteSummaryObject.site + '</a></td>'
+  output += '<td align="left"><a href="' + wafConfigUrl + '">' + siteSummaryObject.site + '</a></td>';    
+
   if (siteSummaryObject.status == statusOkString)
   {
     output += '<td align="left"><span class="greenText">Y</span></td>';
@@ -295,8 +326,6 @@ function buildHtmlSumRow(siteSummaryObject)
   else
     output += htmlXStr;
 
-
-
   if (checkOriginServers)
   {
     if (siteSummaryObject.origServerProtected == 'Y')
@@ -338,7 +367,7 @@ function setHasTrafficInHtmlSummaryTable(domain, hasTraffic)
 
 }
 
-function buildHtml(siteData, originServersInfo, accountSubInfo)
+function buildHtml(siteData, originServersInfo, mainAccountInfo, subAccountsOutput)
 {
   if(settings.printDebugInfo)
     console.time("buildHtml end")
@@ -346,18 +375,38 @@ function buildHtml(siteData, originServersInfo, accountSubInfo)
   var sitesOutput = [];
   
   if(theTitle == "")
-    theTitle = accountSubInfo[0].accountName;
+    theTitle = mainAccountInfo[0].accountName;
 
   output += '<html> <script src="https://code.jquery.com/jquery-3.1.0.js"></script>\n';
   output += '<head> <style> tr:nth-child(even) {background: #CCC}</style> </head>\n';
   output += '<title>' + theTitle + ' - Report </title>\n'
-  output += '<style> .redText { color:red; } .blackText { color:black; } .greenText { color:green; } .brownText { color:brown; } .orangeText { color:orange; }</style>\n'
+  output += '<style> table, th, td {border: 1px solid black; border-collapse: collapse;} .redText { color:red; } .blackText { color:black; } .greenText { color:green; } .brownText { color:brown; } .orangeText { color:orange; }</style>\n'
   output += '<body>\n';
   output += '<h1>' + theTitle + ' - (Account ID ' + accountId + ') - ' + timeNow.format('Y-m-d H:M:S') + '</h1>\n'
 
   output += '<p> Number of sites : ' + siteData.sites.length + '<\p>\n';
 
+  /*Add sub account name, actually set into 2 one for sorting and one for actual display. 
+    The reason is that we want the root account to be the first */
+  for (var i = 0; i < siteData.sites.length; i++)
+  {
+    siteData.sites[i]['sortByAccountName'] = getAccountName(siteData.sites[i].account_id, subAccountsOutput, mainAccountInfo[0].accountId)
+    if (siteData.sites[i]['sortByAccountName'] == "")
+      siteData.sites[i]['accountName'] = "Root";
+    else 
+      siteData.sites[i]['accountName'] = siteData.sites[i]['sortByAccountName'];
+  }
 
+  siteData.sites.sort(function (a,b) {
+    if ((a.sortByAccountName < b.sortByAccountName) || 
+        (a.sortByAccountName == b.sortByAccountName) && (a.domain < b.domain))
+        return (-1);
+    if ((a.sortByAccountName > b.sortByAccountName) || 
+        (a.sortByAccountName == b.sortByAccountName) && (a.domain > b.domain))
+        return (1);  
+    });
+  
+  /*
   //Sort by site name
   siteData.sites.sort(function (a,b) {
     if (a.domain < b.domain)
@@ -365,7 +414,7 @@ function buildHtml(siteData, originServersInfo, accountSubInfo)
     if (a.domain > b.domain)
         return (1);  
     });
-  
+  */
   
   for (var i = 0; i < siteData.sites.length; i++)
   {
@@ -373,7 +422,7 @@ function buildHtml(siteData, originServersInfo, accountSubInfo)
     var policyOutput = [];
     var origServerOutput = [];
 
-    policyOutput =  buildPolicyReport(site, accountSubInfo[0].isWebVolDDosPurchased);
+    policyOutput =  buildPolicyReport(site, mainAccountInfo[0].isWebVolDDosPurchased);
 
     if (checkOriginServers)
     {
@@ -389,7 +438,7 @@ function buildHtml(siteData, originServersInfo, accountSubInfo)
     sitesOutput += '</table>\n'
   }
 
-  output += buildHtmlSummaryTable(accountSubInfo[0].isWebVolDDosPurchased);
+  output += buildHtmlSummaryTable(mainAccountInfo[0].isWebVolDDosPurchased);
   if (checkOriginServers)
     output += buildOriginServerSummary(originServersInfo)
 
@@ -405,7 +454,7 @@ function buildHtml(siteData, originServersInfo, accountSubInfo)
     console.timeEnd("buildHtml end")
 
   if (theFile == "")
-    theFile = accountSubInfo[0].accountName;
+    theFile = mainAccountInfo[0].accountName;
 
   fileName = settings.filePath + theFile;
   if (settings.addTimestamp)
@@ -424,7 +473,11 @@ function buildHtml(siteData, originServersInfo, accountSubInfo)
 
 function createCsv()
 {
-  var csvFileOutput = 'Index,Site,Is Fully Configured,';
+  var csvFileOutput = 'Index,';
+  if (getSubAccountsInfo)
+    csvFileOutput += 'Account,';
+
+  csvFileOutput += 'Site,Is Fully Configured,';
   csvFileOutput += 'Block bad bots,Challenge Suspected,Backdoor Protection,Remote file inclusion,SQL injection,Cross Site Scripting,Ilegal Resource Access,DDoS Activity Mode,Volumetric DDoS';
 
   if (checkOriginServers)
@@ -437,10 +490,12 @@ function createCsv()
     var statusVal = 'N';
     if (siteSummaryObject[i].status == statusOkString)
       statusVal = 'Y';
+    csvFileOutput += i + ',';
 
-    csvFileOutput += i + ',' + siteSummaryObject[i].site + ',' +  statusVal + ',';
+    if (getSubAccountsInfo)
+      csvFileOutput += siteSummaryObject[i].accountName + ',';
     
-    csvFileOutput +=siteSummaryObject[i].blockBadBots + ',' + siteSummaryObject[i].challengeSuspected + ',' + 
+    csvFileOutput += siteSummaryObject[i].site + ',' +  statusVal + ',' + siteSummaryObject[i].blockBadBots + ',' + siteSummaryObject[i].challengeSuspected + ',' + 
       siteSummaryObject[i].backDoorProtection + ',' +  siteSummaryObject[i].remoteFileInclusion + ',' + 
       siteSummaryObject[i].sqlInjection + ',' + siteSummaryObject[i].crossSiteScripting + ',' + 
       siteSummaryObject[i].illegalResourceAccess + ',' + siteSummaryObject[i].ddosActivityMode + ',' + 
@@ -555,13 +610,16 @@ function buildOriginServersReport(domain, sitesOriginServersInfo)
 
 function buildPolicyReport(site, isWebVolDDosPurchased)
 {
-  var siteSummary = {"site": "", "siteId": "", "accountId": "", "status": "", "hasTraffic": "", "blockBadBots": "Y",
+  var siteSummary = {"accountName": "", "site": "", "siteId": "", "accountId": "", "status": "", "hasTraffic": "", "blockBadBots": "Y",
   "challengeSuspected": "Y", "backDoorProtection": "Y", "remoteFileInclusion" : "Y" ,"sqlInjection": "Y" ,"crossSiteScripting": "Y",
   "illegalResourceAccess": "Y", "ddosActivityMode": "Y", "isWebVolDDosPurchased": "Y", "origServerProtected": "Y"};
 
   var policyOutput = '<h3>Security Policies</h3>\n' 
   policyOutput += '<table border="1">\n';
   policyOutput += '<tr><th align="left">Policy</th> <th align="left">Current Setting</th> </tr>\n';
+
+  if (getSubAccountsInfo)
+    siteSummary.accountName = site.accountName;
 
   siteSummary.site = site.domain;
   siteSummary.siteId = site.site_id;
@@ -579,7 +637,6 @@ function buildPolicyReport(site, isWebVolDDosPurchased)
     if (policy.id === 'api.threats.ddos')
     {
       // Special case since there is more than one value that can define 'protected'
-      //console.log("policy.activation_mode " + policy.activation_mode + " || displayPolicy.activation_mode " +  displayPolicy.value + " || policy.activation_mode_text " + policy.activation_mode_text)
       for (var i = 0; i < displayPolicy.value.length; i++)
       {
         if (policy.activation_mode === displayPolicy.value[i].activation_mode)
@@ -662,94 +719,6 @@ function buildPolicyReport(site, isWebVolDDosPurchased)
   return (policyOutput);  
 }
 
-function buildPolicyReport1(site, isWebVolDDosPurchased)
-{
-  var siteSummary = {"site": "", "siteId": "", "accountId": "", "status": "", "hasTraffic": "", "blockBadBots": "Y",
-  "challengeSuspected": "Y", "backDoorProtection": "Y", "remoteFileInclusion" : "Y" ,"sqlInjection": "Y" ,"crossSiteScripting": "Y",
-  "illegalResourceAccess": "Y", "ddosActivityMode": "Y", "origServerProtected": "Y"};
-
-  var policyOutput = '<h3>Security Policies</h3>\n' 
-  policyOutput += '<table border="1">\n';
-  policyOutput += '<tr><th align="left">Policy</th> <th align="left">Current Setting</th> </tr>\n';
-
-  siteSummary.site = site.domain;
-  siteSummary.siteId = site.site_id;
-  siteSummary.accountId = site.account_id;
-  siteSummary.status = site.status;
-
-  for (var k=0; k<site.security.waf.rules.length; k++)
-  {
-    var policy = site.security.waf.rules[k]; 
-    if (policy == null)
-      continue;
-    if (policy.id === 'api.threats.ddos')
-    {
-      if (isWebVolDDosPurchased == false || policy.activation_mode === 'api.threats.ddos.activation_mode.off')
-      {
-        policyOutput += '<tr><td align="left"><span class="blackText">' + policy.name + '</span></td> <td align="left"><span class="redText">Not Protected</span></td></tr>\n';
-        setSecurityIssue(site.domain, "policy", policy.name, policy.activation_mode_text);
-
-        siteSummary.ddosActivityMode = "N";
-      }
-      else
-        policyOutput += '<tr><td align="left"><span class="blackText">' + policy.name + '</span></td> <td align="left"><span class="greenText">Protected</span></td></tr>\n';
-    }
-    else if (policy.id === 'api.threats.bot_access_control')
-    {
-      if (policy.block_bad_bots === false)
-      {
-        policyOutput += '<tr><td align="left"><span class="blackText">Bot Access Control</span></td> <td><span class="redText">Ignore</span></td></tr>\n';
-        setSecurityIssue(site.domain, "policy", "Bot Access Control", policy.block_bad_bots);
-      
-        siteSummary.blockBadBots = "N";
-      }
-      else
-        policyOutput += '<tr><td align="left"><span class="blackText">Bot Access Control</span></td> <td><span class="greenText">Block Request</span></td></tr>\n';
-
-      if (policy.challenge_suspected_bots == true)
-        policyOutput += '<tr><td align="left">Challenge Suspected Bots</td> <td><span class="orangeText">Captcha Challenge</span></td></tr>\n';
-      else
-      {
-        policyOutput += '<tr><td align="left">Challenge Suspected Bots</td> <td><span class="orangeText">Ignore</span></td></tr>\n';
-      }
-    }
-    else if (policy.id === "api.threats.customRule")
-    {
-      //Ignore IncapRules
-    }
-    else
-    {
-      if (policy.action === 'api.threats.action.alert' ||
-          policy.action == 'api.threats.action.disabled')
-      {
-        policyOutput += '<tr><td align="left"><span class="blackText">' + policy.name + '</span></td> <td><span class="redText">' + policy.action_text + '</span></td></tr>\n';
-        setSecurityIssue(site.domain, "policy", policy.name,  policy.action_text);
-        
-        if (policy.id === "api.threats.sql_injection")
-          siteSummary.sqlInjection = "N";
-        else if (policy.id === "api.threats.cross_site_scripting")
-          siteSummary.crossSiteScripting = "N";
-        else if (policy.id === "api.threats.illegal_resource_access")
-          siteSummary.illegalResourceAccess = "N";
-        else if (policy.id === "api.threats.api.threats.backdoor")
-          siteSummary.backDoorProtection = "N";
-        else if (policy.id === "api.threats.remote_file_inclusion")
-          siteSummary.remoteFileInclusion = "N";
-      }
-      else
-        policyOutput += '<tr><td align="left"><span class="blackText">' + policy.name + '</span></td> <td><span class="greenText">' + policy.action_text + '</span></td></tr>\n';
-    }
-
-  }
-
-  policyOutput += '</table>';
-
-  //Set in global summary struct
-  siteSummaryObject.push(siteSummary)
-
-  return (policyOutput);  
-}
-
 function setSecurityIssue(domain, type, subject, reason)
 {
 	var notFound = true;	
@@ -779,3 +748,39 @@ function setSecurityIssue(domain, type, subject, reason)
 }
 
 
+function addSubAccountIdId(accountId)
+{
+	var notFound = true;	
+	for (var i=0; i<subAccountIds.length; i++)
+	{
+		if (subAccountIds[i].accountId == accountId)
+		{
+      notFound = false;
+			break;
+		}
+	}
+  if (notFound)
+  {
+    subAccountIds.push({"accountId": accountId})    
+  }
+}
+
+function getAccountName(accountId, subAccountsOutput, mainAccountId)
+{
+  var name = "undefined";
+
+  if (accountId == mainAccountId)
+    name = "";
+  else
+  {
+    for (var i=0; i<subAccountsOutput.length; i++)
+    {
+      if (subAccountsOutput[i].accountId == accountId)
+      {
+        name = subAccountsOutput[i].accountName
+        break;
+      }
+    }
+  }  
+  return name;
+}
