@@ -14,6 +14,7 @@ module.exports = Object.freeze({
 	filePath: "", // Path where files should be saved, path must be previously created. Format must be as this example if you want to save in data directory in the current installed folder - ./data/
 	addTimestamp: false, // Set to true if you want timestamp appended to the filename
 	saveCsv: true, // Set to true if you want csv files as well as the html file
+	originServerFileNamePrefix: "", // When empty string will use 'Origin-servers' String used as prefix for origin server csv file
 
 // Advanced configuration
 
@@ -43,7 +44,7 @@ module.exports = Object.freeze({
 			"id": "api.threats.bot_access_control",
 		},
 		{
-//ddos is a special case since there is more than one value. Currently code is changed only for this field but can be used as an example if others are required in the future
+		//ddos is a special case since there is more than one value. Currently code is changed only for this field but can be used as an example if others are required in the future
 			"value" :  [
 				{"activation_mode": "api.threats.ddos.activation_mode.on"},
 				{"activation_mode": "api.threats.ddos.activation_mode.auto"},
@@ -61,7 +62,12 @@ module.exports = Object.freeze({
 	],
 
 	printDebugInfo: false,
-    numConcurrentConnections: 15, //Number of concurrent open API sessions
+	numConcurrentConnections: 15, //Number of concurrent open API sessions
+
+	/*After this time the connection request will timeout. Note that if the number is too low it may cause timeout before server actually responds 
+		which implies server is protected */
+	originServerConnectionTimeout: 10000, //(In milliseconds)
+	
 	pageSize: 100 //Internal usage
 
 });

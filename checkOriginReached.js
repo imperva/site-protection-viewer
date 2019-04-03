@@ -11,7 +11,7 @@ var serverNameIndex = 0;
 var totalNumServers = 0;
 
 //Getting arguments
-function checkSiteDataReportPar(originData, originDataOutpt, informCaller)
+function getOriginServerInfo(originData, originDataOutpt, informCaller)
 {
 	console.log("Check " + originData.length/2 + " Origin Servers access (http & https) - this may take a while");
 	totalNumServers = originData.length;
@@ -19,7 +19,7 @@ function checkSiteDataReportPar(originData, originDataOutpt, informCaller)
 		console.time("Check Origin Servers - total time");
 
 	async.forEach(originData, function(site, cb){
-		checkOriginServer(site.Name, site.serverName, site.Protocol, originDataOutpt, cb);
+		checkOriginServer(site.subAccountId, site.Name, site.serverName, site.Protocol, originDataOutpt, cb);
 	}, function(err){
 		if (err){
 			//deal with the error
@@ -33,37 +33,13 @@ function checkSiteDataReportPar(originData, originDataOutpt, informCaller)
 	});
 }
 
-
-
-function checkSiteDataReport(siteData, originData, informCaller)
-{
-	if(settings.printDebugInfo)
-	{
-		console.log("Check Origin Servers");
-		console.time("Check Origin Servers - total time");
-	}
-
-	async.forEach(originData, function(site, cb){
-		checkOriginServer(site.Name, site.serverName, cb);
-	}, function(err){
-		if (err){
-			//deal with the error
-			console.log("error in checking sites")
-		}
-		if(settings.printDebugInfo)
-			console.timeEnd("Check Origin Servers - total time")
-
-		informCaller(siteData, originProtectInfo);
-	});
-}
-
-function checkOriginServer(name, serverNamesList, protocol, origDataOutpt, siteCb)
+function checkOriginServer(subAccountId, siteName, serverNamesList, protocol, origDataOutpt, siteCb)
 {
 	var serverNames = serverNamesList.split(';'); // split string on comma space
 
 	async.forEach(serverNames, function(serverName, cb){
 		serverNameIndex++
-		checkIfReachable(serverNameIndex, name, serverName, protocol, origDataOutpt, cb);
+		checkIfReachable(serverNameIndex, subAccountId, siteName, serverName, protocol, origDataOutpt, cb);
 	}, function(err){
 		if (err){
 			//deal with the error
@@ -73,37 +49,39 @@ function checkOriginServer(name, serverNamesList, protocol, origDataOutpt, siteC
 	});
 }
 
-function checkIfReachable(index, siteName, serverName, protocol, origDataOutpt, cb)
+function checkIfReachable(index, subAccountId, siteName, serverName, protocol, origDataOutpt, cb)
 {
 RequestUrl = protocol + '://' + serverName;
 var result;
-request({ url: RequestUrl, method: "GET", followRedirect: false}, 
+if(settings.printDebugInfo)
+	console.log("Check if " + serverName + " is reachable");
+request({ url: RequestUrl, method: "GET", followRedirect: false, timeout:settings.originServerConnectionTimeout},
 	function (err, resp, data) 
 	{
 		if(settings.printDebugInfo)
-			console.log("origin server # " + totalNumServers--)
+			console.log("origin server # " + totalNumServers-- + " Server answered: " + serverName)
 			
 		if (err)
 		{
 			//Protected Only if error is connection refused or timeout, other errors might be https errors which means origin server is reachable
 			if (err.code == 'ECONNREFUSED' || err.code == 'ETIMEDOUT')
-				addOriginInfoToSite(siteName, serverName, protocol, true, err.code, origDataOutpt);
+				addOriginInfoToSite(subAccountId, siteName, serverName, protocol, true, err.code, origDataOutpt);
 			else
 			{
 				if (!err.code)
 					err.code = err.reason;
-				addOriginInfoToSite(siteName, serverName, protocol, false, err.code, origDataOutpt);1
+				addOriginInfoToSite(subAccountId, siteName, serverName, protocol, false, err.code, origDataOutpt);
 			}
 		}
 		else
-			addOriginInfoToSite(siteName, serverName, protocol, false, resp.statusCode, origDataOutpt);
+			addOriginInfoToSite(subAccountId, siteName, serverName, protocol, false, resp.statusCode, origDataOutpt);
 		cb();
 	});
 }	
 
 
 
-function addOriginInfoToSite(siteName, serverName, protocol, isProtected, code, origDataOutpt)
+function addOriginInfoToSite(subAccountId, siteName, serverName, protocol, isProtected, code, origDataOutpt)
 {
 	var notFound = true;	
 	for (var i=0; i<origDataOutpt.length; i++)
@@ -116,7 +94,7 @@ function addOriginInfoToSite(siteName, serverName, protocol, isProtected, code, 
 		}
 	}
 	if (notFound)
-		origDataOutpt.push({"domain": siteName,"originServers":[{"serverName": serverName,  "protocol": protocol, "isProtected": isProtected, "code": code}]})
+		origDataOutpt.push({"subAccountId": subAccountId,"domain": siteName,"originServers":[{"serverName": serverName,  "protocol": protocol, "isProtected": isProtected, "code": code}]})
 }
 
-module.exports.checkSiteDataReportPar = checkSiteDataReportPar;
+module.exports.getOriginServerInfo = getOriginServerInfo;

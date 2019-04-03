@@ -20,7 +20,6 @@ var fileName;
 var pageSize = 100;
 var timeNow = dateTime.create();
 
-
 //This information is used for calling different APIs
 var genericPostData = {
   api_id: settings.apiId,
@@ -44,6 +43,9 @@ var theFile = settings.fileName;
 var checkOriginServers = settings.checkOriginServers;
 var getSubAccountsInfo = settings.getSubAccountsInfo;
 
+var originServerCsvPrefix = settings.originServerFileNamePrefix;
+if (originServerCsvPrefix == "")
+  originServerCsvPrefix = 'Origin-servers'
 
 var validData = true;
 if (accountId == "")
@@ -142,8 +144,9 @@ function getAllData(commonPostData, accountId, pageNum)
     });
     res.on('error', function (err) {
         console.log(err);
-    })
     });
+
+  });
 
     // req error
     req.on('error', function (err) {
@@ -151,8 +154,8 @@ function getAllData(commonPostData, accountId, pageNum)
       console.log(err);
       });
   
-      //send request with the postData form
-      if(settings.printDebugInfo)
+    //send request with the postData form
+    if(settings.printDebugInfo)
         console.time("get page " + pageNum)
       req.write(postData);
       req.end();
@@ -170,8 +173,8 @@ function buildHtmlReport(commonPostData, siteData)
     // Setting data for all sites to check origin server protection for http and https
     for (var j=0; j <  siteData.sites[i].ips.length; j++)
     {
-      originsData.push({'Name':  siteData.sites[i].domain, 'Protocol': 'https', 'serverName': siteData.sites[i].ips[j]});
-      originsData.push({'Name':  siteData.sites[i].domain, 'Protocol': 'http', 'serverName': siteData.sites[i].ips[j]});
+      originsData.push({'subAccountId':siteData.sites[i].account_id, 'Name':  siteData.sites[i].domain, 'Protocol': 'https', 'serverName': siteData.sites[i].ips[j]});
+      originsData.push({'subAccountId':siteData.sites[i].account_id, 'Name':  siteData.sites[i].domain, 'Protocol': 'http', 'serverName': siteData.sites[i].ips[j]});
     }
 
     addSubAccountIdId(siteData.sites[i].account_id)
@@ -196,7 +199,7 @@ function getSitesInfo(commonPostData, siteData, originsData, informCaller)
       function(callback) {
         //Get origin server info
         if (checkOriginServers)
-          checkOrigin.checkSiteDataReportPar(originsData, origServerStatusOutpt.originServers, callback);
+          checkOrigin.getOriginServerInfo(originsData, origServerStatusOutpt.originServers, callback);
         else
           callback();
       },
@@ -386,35 +389,37 @@ function buildHtml(siteData, originServersInfo, mainAccountInfo, subAccountsOutp
 
   output += '<p> Number of sites : ' + siteData.sites.length + '<\p>\n';
 
-  /*Add sub account name, actually set into 2 one for sorting and one for actual display. 
-    The reason is that we want the root account to be the first */
-  for (var i = 0; i < siteData.sites.length; i++)
+  if (getSubAccountsInfo)
   {
-    siteData.sites[i]['sortByAccountName'] = getAccountName(siteData.sites[i].account_id, subAccountsOutput, mainAccountInfo[0].accountId)
-    if (siteData.sites[i]['sortByAccountName'] == "")
-      siteData.sites[i]['accountName'] = "Root";
-    else 
-      siteData.sites[i]['accountName'] = siteData.sites[i]['sortByAccountName'];
-  }
+    /*Add sub account name, actually set into 2 one for sorting and one for actual display. 
+      The reason is that we want the root account to be the first */
+    for (var i = 0; i < siteData.sites.length; i++)
+    {
+      siteData.sites[i]['sortByAccountName'] = getAccountName(siteData.sites[i].account_id, subAccountsOutput, mainAccountInfo[0].accountId)
+      if (siteData.sites[i]['sortByAccountName'] == "")
+        siteData.sites[i]['accountName'] = "Root";
+      else 
+        siteData.sites[i]['accountName'] = siteData.sites[i]['sortByAccountName'];
+    }
 
-  siteData.sites.sort(function (a,b) {
-    if ((a.sortByAccountName < b.sortByAccountName) || 
-        (a.sortByAccountName == b.sortByAccountName) && (a.domain < b.domain))
-        return (-1);
-    if ((a.sortByAccountName > b.sortByAccountName) || 
-        (a.sortByAccountName == b.sortByAccountName) && (a.domain > b.domain))
-        return (1);  
-    });
-  
-  /*
-  //Sort by site name
-  siteData.sites.sort(function (a,b) {
-    if (a.domain < b.domain)
-        return (-1);
-    if (a.domain > b.domain)
-        return (1);  
-    });
-  */
+    siteData.sites.sort(function (a,b) {
+      if ((a.sortByAccountName < b.sortByAccountName) || 
+          (a.sortByAccountName == b.sortByAccountName) && (a.domain < b.domain))
+          return (-1);
+      if ((a.sortByAccountName > b.sortByAccountName) || 
+          (a.sortByAccountName == b.sortByAccountName) && (a.domain > b.domain))
+          return (1);  
+      });
+  }
+  else
+  {
+    siteData.sites.sort(function (a,b) {
+      if (a.domain < b.domain)
+          return (-1);
+      if (a.domain > b.domain)
+          return (1);  
+      });    
+  }
   
   for (var i = 0; i < siteData.sites.length; i++)
   {
@@ -440,8 +445,11 @@ function buildHtml(siteData, originServersInfo, mainAccountInfo, subAccountsOutp
 
   output += buildHtmlSummaryTable(mainAccountInfo[0].isWebVolDDosPurchased);
   if (checkOriginServers)
+  {
+    if (getSubAccountsInfo)  
+      enrichOriginServerInfoWithSubAccount(originServersInfo, mainAccountInfo, subAccountsOutput);
     output += buildOriginServerSummary(originServersInfo)
-
+  }
   if (settings.showFullDetails)
   {
     output += '<h2>Full Details</h2>\n';
@@ -465,17 +473,89 @@ function buildHtml(siteData, originServersInfo, mainAccountInfo, subAccountsOutp
   utils.saveToFile(fileName + '.html', output);
 
   if (settings.saveCsv)
-    createCsv();
+    createCsv(originServersInfo);
 
  if(settings.printDebugInfo)
     console.timeEnd("Full run time")
 }
 
-function createCsv()
+function createCsv(originServersInfo)
+{
+  createSitesCsv();
+  if (checkOriginServers)
+    createOriginServerCsv(originServersInfo)
+}
+
+function createOriginServerCsv(sitesOriginServersInfo)
+{
+  var csvFileOutput = 'Index,';
+  var index = 1;
+  //If account info is added, data should also be sorted differently.
+  if (getSubAccountsInfo)
+  {
+    csvFileOutput += 'Account,';
+
+    sitesOriginServersInfo.originServers.sort(function (a,b) {
+    if ((a.sortByAccountName < b.sortByAccountName) || 
+        (a.sortByAccountName == b.sortByAccountName) && (a.domain < b.domain))
+        return (-1);
+    if ((a.sortByAccountName > b.sortByAccountName) || 
+        (a.sortByAccountName == b.sortByAccountName) && (a.domain > b.domain))
+        return (1);  
+    });
+  }
+  else
+  {
+    sitesOriginServersInfo.originServers.sort(function (a,b) {
+      if (a.domain < b.domain)
+          return (-1);
+      if (a.domain > b.domain)
+          return (1);  
+      });    
+  }
+
+  csvFileOutput += 'Site,Origin Server,Protocol,Is Protected, Reason\r\n';
+
+  for (var i = 0; i < sitesOriginServersInfo.originServers.length; i++)
+  {
+      //Sort results by serverName since responses arrive async
+      sitesOriginServersInfo.originServers[i].originServers.sort(function (a,b) {
+      if (a.domain < b.serverName)
+          return (-1);
+      if (a.domain > b.serverName)
+          return (1);  
+      });
+
+    for (var j = 0; j < sitesOriginServersInfo.originServers[i].originServers.length; j++)
+    { 
+      csvFileOutput += index + ',';
+      index++;
+
+      if(getSubAccountsInfo)
+      {
+        csvFileOutput += sitesOriginServersInfo.originServers[i].accountName + ',';
+      }
+      csvFileOutput += sitesOriginServersInfo.originServers[i].domain + ',' +
+      sitesOriginServersInfo.originServers[i].originServers[j].serverName + ',' + sitesOriginServersInfo.originServers[i].originServers[j].protocol + ',';
+     
+      //In order to write site only once per all origin servers
+      if (sitesOriginServersInfo.originServers[i].originServers[j].isProtected == true)
+        csvFileOutput += 'Y' + ',';
+      else
+        csvFileOutput += 'N' + ',';
+
+      csvFileOutput += sitesOriginServersInfo.originServers[i].originServers[j].code + '\r\n';
+  }
+ }
+ utils.saveToFile(originServerCsvPrefix + ' ' + fileName + '.csv', csvFileOutput);
+}
+
+
+function createSitesCsv()
 {
   var csvFileOutput = 'Index,';
   if (getSubAccountsInfo)
-    csvFileOutput += 'Account,';
+      csvFileOutput += 'Account,';
 
   csvFileOutput += 'Site,Is Fully Configured,';
   csvFileOutput += 'Block bad bots,Challenge Suspected,Backdoor Protection,Remote file inclusion,SQL injection,Cross Site Scripting,Ilegal Resource Access,DDoS Activity Mode,Volumetric DDoS';
@@ -490,7 +570,7 @@ function createCsv()
     var statusVal = 'N';
     if (siteSummaryObject[i].status == statusOkString)
       statusVal = 'Y';
-    csvFileOutput += i + ',';
+    csvFileOutput += (i+1) + ',';
 
     if (getSubAccountsInfo)
       csvFileOutput += siteSummaryObject[i].accountName + ',';
@@ -508,7 +588,7 @@ function createCsv()
   
   }
 
-  utils.saveToFile(settings.filePath + fileName + '.csv', csvFileOutput);
+  utils.saveToFile(fileName + '.csv', csvFileOutput);
 }
 
 
@@ -516,38 +596,69 @@ function buildOriginServerSummary(sitesOriginServersInfo)
 {
   var originServersOutput = '<h2>Origin Servers</h2>\n';
   var originServerStatusStr;
-  var domainStr = "";
+  var domainStr = '';
+  var curAccountName = '';
   
-  //Sort by site name
-  sitesOriginServersInfo.originServers.sort(function (a,b) {
-    if (a.domain < b.domain)
+  originServersOutput += '<table border="1">\n<tr>';
+ 
+  //If account info is added, data should also be sorted differently.
+  if (getSubAccountsInfo)
+  {
+    sitesOriginServersInfo.originServers.sort(function (a,b) {
+    if ((a.sortByAccountName < b.sortByAccountName) || 
+        (a.sortByAccountName == b.sortByAccountName) && (a.domain < b.domain))
         return (-1);
-    if (a.domain > b.domain)
+    if ((a.sortByAccountName > b.sortByAccountName) || 
+        (a.sortByAccountName == b.sortByAccountName) && (a.domain > b.domain))
         return (1);  
     });
 
+    originServersOutput += '<th align="left">Account</th>';
+  }
+  else
+  {
+    sitesOriginServersInfo.originServers.sort(function (a,b) {
+      if (a.domain < b.domain)
+          return (-1);
+      if (a.domain > b.domain)
+          return (1);  
+      });    
+  }
 
-
-  originServersOutput += '<table border="1">\n';
-  originServersOutput += '<tr><th align="left">Site</th><th align="left">Origin Server</th><th align="left">Protocol</th><th align="left">Is Protected</th><th  align="left">Reason</th> </tr>\n';
-  
+  originServersOutput += '<th align="left">Site</th><th align="left">Origin Server</th><th align="left">Protocol</th><th align="left">Is Protected</th><th  align="left">Reason</th> </tr>\n';
+ 
   for (var i = 0; i < sitesOriginServersInfo.originServers.length; i++)
   {
-    domainStr = '<td align="left" id="' + sitesOriginServersInfo.originServers[i].domain + '">' + sitesOriginServersInfo.originServers[i].domain + '</td>';
-      //Sort results by serverName since responses arrive async
-      sitesOriginServersInfo.originServers[i].originServers.sort(function (a,b) {
-      if (a.domain < b.serverName)
-          return (-1);
-      if (a.domain > b.serverName)
-          return (1);  
-      });
+    domainStr = '';
+    if (getSubAccountsInfo)
+    {
+      if (curAccountName != sitesOriginServersInfo.originServers[i].accountName)
+      {
+        domainStr += '<td align="left">' + sitesOriginServersInfo.originServers[i].accountName + '</td>';
+        curAccountName = sitesOriginServersInfo.originServers[i].accountName;
+      }
+      else
+        domainStr += '<td align="left"></td>';
+    }
+
+    domainStr += '<td align="left">' + sitesOriginServersInfo.originServers[i].domain + '</td>';
+    //Sort results by serverName since responses arrive async
+    sitesOriginServersInfo.originServers[i].originServers.sort(function (a,b) {
+    if (a.domain < b.serverName)
+        return (-1);
+    if (a.domain > b.serverName)
+        return (1);  
+    });
 
     for (var j = 0; j < sitesOriginServersInfo.originServers[i].originServers.length; j++)
     {    
       //In order to write site only once per all origin servers
       if (j != 0)
+      {
         domainStr = '<td align="left"></td>';
-
+        if (getSubAccountsInfo)
+          domainStr += '<td align="left"></td>';
+      }
       if (sitesOriginServersInfo.originServers[i].originServers[j].isProtected == true)
         originServerStatusStr = '<td align="left"><span class="greenText">Yes</span></td></span></td>';
       else 
@@ -708,9 +819,6 @@ function buildPolicyReport(site, isWebVolDDosPurchased)
   else
     policyOutput += '<tr><td align="left"><span class="blackText">Volumetric DDoS</span></td> <td align="left"><span class="greenText">Protected</span></td></tr>\n';
 
-
-
-
   policyOutput += '</table>';
 
   //Set in global summary struct
@@ -747,7 +855,7 @@ function setSecurityIssue(domain, type, subject, reason)
   }
 }
 
-
+//Sub account related functionality
 function addSubAccountIdId(accountId)
 {
 	var notFound = true;	
@@ -783,4 +891,21 @@ function getAccountName(accountId, subAccountsOutput, mainAccountId)
     }
   }  
   return name;
+}
+
+function enrichOriginServerInfoWithSubAccount(sitesOriginServersInfo, mainAccountInfo, subAccountsOutput)
+{
+
+  if (getSubAccountsInfo)
+  {
+    //Adding accountName and sort by it
+    for (var i = 0; i < sitesOriginServersInfo.originServers.length; i++)
+    {
+      sitesOriginServersInfo.originServers[i]['sortByAccountName'] = getAccountName(sitesOriginServersInfo.originServers[i].subAccountId, subAccountsOutput, mainAccountInfo[0].accountId)
+      if (sitesOriginServersInfo.originServers[i]['sortByAccountName'] == "")
+        sitesOriginServersInfo.originServers[i]['accountName'] = "Root";
+      else 
+        sitesOriginServersInfo.originServers[i]['accountName'] = sitesOriginServersInfo.originServers[i]['sortByAccountName'];
+    }
+  }
 }
