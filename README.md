@@ -1,6 +1,7 @@
 # (SPV) site-protection-viewer
 This **nodejs** tool will provide the user with a simple way to see the current security configuration of the websites protected by our Cloud WAF (Incapsula). It provides a centralized view of all the account website security configuration and also checks whether the sites origin servers are not restricted to receive traffic only from Incapsula as described [here](https://support.incapsula.com/hc/en-us/articles/200627570-Restricting-direct-access-to-your-website-Incapsula-s-IP-addresses-). The tool uses the [Incapsula API](https://docs.incapsula.com/Content/API/api.htm) to get the relevant site information and http/https calls to check the origin servers accessibility.
-The output is an html file and (if configured) csv files. For more infomation please refer to this [blog] (https://www.imperva.com/blog/enhance-imperva-cloud-waf-with-a-new-management-tool-in-the-imperva-github/).
+The output is an html file and (if configured) csv files. 
+For more infomation please refer to this [blog](https://www.imperva.com/blog/enhance-imperva-cloud-waf-with-a-new-management-tool-in-the-imperva-github/).
 
 
 # Usage
