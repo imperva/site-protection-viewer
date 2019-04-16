@@ -58,13 +58,22 @@ if(settings.printDebugInfo)
 request({ url: RequestUrl, method: "GET", followRedirect: false, timeout:settings.originServerConnectionTimeout},
 	function (err, resp, data) 
 	{
+		var isProtected = false;
 		if(settings.printDebugInfo)
 			console.log("origin server # " + totalNumServers-- + " Server answered: " + serverName)
 			
 		if (err)
 		{
-			//Protected Only if error is connection refused or timeout, other errors might be https errors which means origin server is reachable
-			if (err.code == 'ECONNREFUSED' || err.code == 'ETIMEDOUT')
+			//Protected Only if error code is in list, else it means origin server is reachable
+			for (var i = 0; i < settings.originServerProtectedCode.length; i++)
+			{
+				if (err.code == settings.originServerProtectedCode[i])
+				{
+					isProtected = true;
+					break;
+				}
+			}
+			if (isProtected == true)
 				addOriginInfoToSite(subAccountId, siteName, serverName, protocol, true, err.code, origDataOutpt);
 			else
 			{
@@ -78,8 +87,6 @@ request({ url: RequestUrl, method: "GET", followRedirect: false, timeout:setting
 		cb();
 	});
 }	
-
-
 
 function addOriginInfoToSite(subAccountId, siteName, serverName, protocol, isProtected, code, origDataOutpt)
 {

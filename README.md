@@ -2,7 +2,7 @@
 This **nodejs** tool will provide the user with a simple way to see the current security configuration of the websites protected by our Cloud WAF (Incapsula). It provides a centralized view of all the account website security configuration and also checks whether the sites origin servers are not restricted to receive traffic only from Incapsula as described [here](https://support.incapsula.com/hc/en-us/articles/200627570-Restricting-direct-access-to-your-website-Incapsula-s-IP-addresses-). The tool uses the [Incapsula API](https://docs.incapsula.com/Content/API/api.htm) to get the relevant site information and http/https calls to check the origin servers accessibility.
 The output is an html file and (if configured) csv files. 
 For more infomation please refer to this [blog](https://www.imperva.com/blog/enhance-imperva-cloud-waf-with-a-new-management-tool-in-the-imperva-github/).
-
+The tool can be used with it's default settings or if needed, user may change the behavior by changing the values in the settings file as described in the configuration section of this page.
 
 # Usage
 ## Installation
@@ -23,6 +23,7 @@ For more infomation please refer to this [blog](https://www.imperva.com/blog/enh
    - **addTimestamp** (default false) - *true* if you want to have the timestamp attached to the filenames. Without this each time the tool is run the output files will be overridden
    - **saveCsv** (default true) - *true* if you want a csv file as well as an html file
    - **originServerFileNamePrefix** (default 'Origin-servers') - String used as prefix for origin server csv file
+   - **originServerProtectedCode** When origin servers are checked, if one of these codes is returned, it implies that the origin server was NOT reached - it is protected
    - **protectionDisplay** - Use these settings to control the display of whether a setting is considered protected or not.
    - **printDebugInfo** - (default false) - *true* to print debug info during execution	
    - **numConcurrentConnections** - (default 15) - Number of concurrent open API sessions

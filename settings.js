@@ -18,9 +18,19 @@ module.exports = Object.freeze({
 
 // Advanced configuration
 
-/* These settings will defines per rule if protected. Per rule (id). The received paramters values from the API are compared and if equal to 
-	the value of the parameter, it means it that the field will be displayed as 'protected'. 
-*/
+	//When origin servers are checked, if one of these codes is returned, it implies that the origin server was NOT reached - it is protected
+	// Some common error codes can be found in https://nodejs.org/api/errors.html
+	originServerProtectedCode: [
+		"EAI_AGAIN", // This is a DNS lookup timed out error means it is either a network connectivity error or some proxy related error
+		"ECONNREFUSED", //(Connection refused): No connection could be made because the target machine actively refused it. This usually results from trying to connect to a service that is inactive on the foreign host. (from https://www.codingdefined.com/2015/06/nodejs-error-errno-eaiagain.html)
+		"ECONNRESET", //(Connection reset by peer): A connection was forcibly closed by a peer. This normally results from a loss of the connection on the remote socket due to a timeout or reboot. Commonly encountered via the http and net modules
+		"ENOTFOUND", //(DNS lookup failed): Indicates a DNS failure of either EAI_NODATA or EAI_NONAME. This is not a standard POSIX error
+		"ETIMEDOUT" //(Operation timed out): A connect or send request failed because the connected party did not properly respond after a period of time. Usually encountered by http or net — often a sign that a socket.end() was not properly called
+	],
+
+	/* These settings will defines per rule if protected. Per rule (id). The received paramters values from the API are compared and if equal to 
+		the value of the parameter, it means it that the field will be displayed as 'protected'. 
+	*/
 	protectionDisplay : [
 		{
 			"action": "api.threats.action.block_request",
