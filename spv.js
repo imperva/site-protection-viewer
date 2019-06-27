@@ -73,6 +73,7 @@ if (validData == false)
 
 var fullPage = {sites: []};
 
+console.log("site-protection-viewer version: " + settings.version);
 console.log("Start generating report");
 if (checkOriginServers)
   console.log("Note that checkOriginServers = true. This means that total run time will be longer")

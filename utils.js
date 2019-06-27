@@ -16,15 +16,20 @@ function saveToFile(filename, data)
 
 function getDisplayPolicy(id)
 {
-  var policy;
+  var policy = settings.defaultProtectionDisplayPolicy;
+  var found = false;
   for (var i = 0; i < settings.protectionDisplay.length; i++)
   {
     if (settings.protectionDisplay[i].id == id)
     {
       policy = settings.protectionDisplay[i];
+      found = true;
       break;
     }
   }
+  
+  if (!found)
+    console.log(id + " is not supported by this tool" )
   return (policy);
 }
 

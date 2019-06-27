@@ -27,6 +27,7 @@ The tool can be used with it's default settings or if needed, user may change th
    - **protectionDisplay** - Use these settings to control the display of whether a setting is considered protected or not.
    - **printDebugInfo** - (default false) - *true* to print debug info during execution	
    - **numConcurrentConnections** - (default 15) - Number of concurrent open API sessions
+   - **defaultProtectionDisplayPolicy** - This is used if specific action was not set in protectionDisplay
    - **originServerConnectionTimeout** - (default 10000 miliseconds) Timeout for connection request to origin-server. Note that if the number is too low it may cause timeout before server actually responds which implies server is protected
    
 ## Run tool

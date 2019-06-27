@@ -1,5 +1,5 @@
 module.exports = Object.freeze({
-//Configuration
+	//Configuration
 	accountId: "", // Your account ID - Mandatory
 	apiId: "", // Your api id - Mandatory
 	apiKey: "",  // Your api key - Mandatory
@@ -17,7 +17,6 @@ module.exports = Object.freeze({
 	originServerFileNamePrefix: "", // When empty string will use 'Origin-servers' String used as prefix for origin server csv file
 
 // Advanced configuration
-
 	//When origin servers are checked, if one of these codes is returned, it implies that the origin server was NOT reached - it is protected
 	// Some common error codes can be found in https://nodejs.org/api/errors.html
 	originServerProtectedCode: [
@@ -25,7 +24,7 @@ module.exports = Object.freeze({
 		"ECONNREFUSED", //(Connection refused): No connection could be made because the target machine actively refused it. This usually results from trying to connect to a service that is inactive on the foreign host. (from https://www.codingdefined.com/2015/06/nodejs-error-errno-eaiagain.html)
 		"ECONNRESET", //(Connection reset by peer): A connection was forcibly closed by a peer. This normally results from a loss of the connection on the remote socket due to a timeout or reboot. Commonly encountered via the http and net modules
 		"ENOTFOUND", //(DNS lookup failed): Indicates a DNS failure of either EAI_NODATA or EAI_NONAME. This is not a standard POSIX error
-		"ETIMEDOUT" //(Operation timed out): A connect or send request failed because the connected party did not properly respond after a period of time. Usually encountered by http or net — often a sign that a socket.end() was not properly called
+		"ETIMEDOUT" //(Operation timed out): A connect or send request failed because the connected party did not properly respond after a period of time. Usually encountered by http or net ï¿½ often a sign that a socket.end() was not properly called
 	],
 
 	/* These settings will defines per rule if protected. Per rule (id). The received paramters values from the API are compared and if equal to 
@@ -71,14 +70,19 @@ module.exports = Object.freeze({
 		}
 	],
 
+	defaultProtectionDisplayPolicy: "api.threats.action.block_request", //This is used if specific action was not set in protectionDisplay
+
 	printDebugInfo: false,
 	numConcurrentConnections: 15, //Number of concurrent open API sessions
 
 	/*After this time the connection request will timeout. Note that if the number is too low it may cause timeout before server actually responds 
 		which implies server is protected */
 	originServerConnectionTimeout: 10000, //(In milliseconds)
-	
-	pageSize: 100 //Internal usage
+
+//Internal usage	
+
+	version: "2.0",
+	pageSize: 100
 
 });
 
