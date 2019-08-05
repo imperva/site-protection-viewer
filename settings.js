@@ -7,6 +7,7 @@ module.exports = Object.freeze({
 	getSubAccountsInfo:true, // When set to true, Sub accounts are also listed, this may take a longer time
 	showFullDetails: false, // When set to true, the setting details are listed per site
 
+
 	title: "", //When empty string it will use the account name as defined in MY
 
 //File
@@ -29,48 +30,73 @@ module.exports = Object.freeze({
 
 	/* These settings will defines per rule if protected. Per rule (id). The received paramters values from the API are compared and if equal to 
 		the value of the parameter, it means it that the field will be displayed as 'protected'. 
-	*/
+		Current values reflect the default settings when creating a new website.
+		*/
 	protectionDisplay : [
 		{
-			"action": "api.threats.action.block_request",
+			"value" :  [
+				{"isProtected": "api.threats.action.block_request"},
+				{"isProtected" : "api.threats.action.block_ip"},
+				{"isProtected" : "api.threats.action.block_user"},				
+			],			
 			"id": "api.threats.cross_site_scripting"
 		},
 		{
-			"action": "api.threats.action.block_request",
+			"value" :  [
+				{"isProtected": "api.threats.action.block_request"},
+				{"isProtected" : "api.threats.action.block_ip"},
+				{"isProtected" : "api.threats.action.block_user"},				
+			],
 			"id": "api.threats.sql_injection",
 		},
 		{
-			"action": "api.threats.action.block_request",
+			"value" :  [
+				{"isProtected": "api.threats.action.block_request"},
+				{"isProtected" : "api.threats.action.block_ip"},
+				{"isProtected" : "api.threats.action.block_user"},				
+			],
 			"id": "api.threats.cross_site_scripting",
 		},
 		{
-			"action": "api.threats.action.block_request",
+			"value" :  [
+				{"isProtected": "api.threats.action.block_request"},
+				{"isProtected" : "api.threats.action.block_ip"},
+				{"isProtected" : "api.threats.action.block_user"},				
+			],
 			"id": "api.threats.illegal_resource_access",
 		},
+		{
+			"value" :  [
+				{"isProtected" : "api.threats.action.quarantine_url"},				
+			],
+			"id": "api.threats.backdoor",
+		},
+		{
+			"value" :  [
+				{"isProtected": "api.threats.action.block_request"},
+				{"isProtected" : "api.threats.action.block_ip"},
+				{"isProtected" : "api.threats.action.block_user"},				
+			],
+			"id": "api.threats.remote_file_inclusion",
+		},
+		//ddos is a special case since it uses activation_mode instead of policy.action
+		{
+				"value" :  [
+					{"isProtected": "api.threats.ddos.activation_mode.on"},
+					{"isProtected": "api.threats.ddos.activation_mode.auto"},
+				],
+				"id": "api.threats.ddos",
+		},
+		// Bots is special since it has differet values that need to be used
 		{
 			"block_bad_bots": true,
 			"challenge_suspected_bots": true,
 			"id": "api.threats.bot_access_control",
-		},
-		{
-		//ddos is a special case since there is more than one value. Currently code is changed only for this field but can be used as an example if others are required in the future
-			"value" :  [
-				{"activation_mode": "api.threats.ddos.activation_mode.on"},
-				{"activation_mode": "api.threats.ddos.activation_mode.auto"},
-			],
-			"id": "api.threats.ddos",
-		},
-		{
-			"action": "api.threats.action.quarantine_url",
-			"id": "api.threats.backdoor",
-		},
-		{
-			"action": "api.threats.action.block_request",
-			"id": "api.threats.remote_file_inclusion",
 		}
 	],
 
-	defaultProtectionDisplayPolicy: "api.threats.action.block_request", //This is used if specific action was not set in protectionDisplay
+	defaultProtectionDisplayPolicy: {"value" : [{"isProtected" : "api.threats.action.block_request"}]}, //This is used if specific action was not set in protectionDisplay
+
 
 	printDebugInfo: false,
 	numConcurrentConnections: 15, //Number of concurrent open API sessions
@@ -80,8 +106,7 @@ module.exports = Object.freeze({
 	originServerConnectionTimeout: 10000, //(In milliseconds)
 
 //Internal usage	
-
-	version: "1.5",
+	version: "1.6",
 	pageSize: 100
 
 });

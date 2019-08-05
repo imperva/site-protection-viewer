@@ -28,6 +28,10 @@ var genericPostData = {
   page_num: 0
 };
 
+/**/ 
+ var appVersion = 1.6;
+ var requiredSettingsVersion = 1.6;
+/**/
 
 //Colored html status
 var htmlVStr = '<td align="left"><span class="greenText">V</span></td>';
@@ -73,7 +77,12 @@ if (validData == false)
 
 var fullPage = {sites: []};
 
-console.log("site-protection-viewer version: " + settings.version);
+console.log("site-protection-viewer version: " + appVersion);
+if (requiredSettingsVersion != settings.version)
+{
+  console.log("Aborting - Required settings version is " + requiredSettingsVersion + " wherease actual settings version is "+ settings.version);
+  process.exit();
+}
 console.log("Start generating report");
 if (checkOriginServers)
   console.log("Note that checkOriginServers = true. This means that total run time will be longer")
@@ -237,8 +246,8 @@ function buildHtmlSummaryTable(isWebVolDDosPurchased)
   if (getSubAccountsInfo)
     output += '<th align="left">Account</th>';
     
-  output += '<th align="left">Site</th><th align="left">' + statusString + hasTrafficString + '<th align="left">Block bad bots</th><th align="left">Challenge Suspected</th><th align="left">Backdoor Protection</th>' +
-    '<th align="left">Remote file inclusion</th><th align="left">SQL injection</th><th align="left">Cross Site Scripting</th><th align="left">Ilegal Resource Access</th>' +
+  output += '<th align="left">Site</th><th align="left">' + statusString + hasTrafficString + '<th align="left">Block Bad Bots</th><th align="left">Challenge Suspected Bots</th><th align="left">Backdoor Protection</th>' +
+    '<th align="left">Remote File Inclusion</th><th align="left">SQL Injection</th><th align="left">Cross Site Scripting</th><th align="left">Ilegal Resource Access</th>' +
     '<th align="left">DDoS Activity</th><th align="left">Volumetric DDoS</th>';
     
   //If checking orig servers
@@ -738,24 +747,24 @@ function buildPolicyReport(site, isWebVolDDosPurchased)
   siteSummary.accountId = site.account_id;
   siteSummary.status = site.status;
 
+
+  if (siteSummary.status == statusOkString)
+    policyOutput += '<tr><td align="left"><span class="blackText">Fully configured</span></td> <td align="left"><span class="greenText">Yes</span></td></tr>\n';
+  else
+    policyOutput += '<tr><td align="left"><span class="blackText">Fully configured</span></td> <td align="left"><span class="redText">No</span></td></tr>\n';
+  
   for (var k=0; k<site.security.waf.rules.length; k++)
   {
     var ddosProtected = false;
+    var isProteced = false;
     var policy = site.security.waf.rules[k]; 
+
     if (policy == null)
       continue;
 
-    var displayPolicy = utils.getDisplayPolicy(policy.id);
-    if (policy.id === 'api.threats.ddos')
+    if (policy.id === 'api.threats.ddos') //Special case using activation_mode
     {
-      // Special case since there is more than one value that can define 'protected'
-      for (var i = 0; i < displayPolicy.value.length; i++)
-      {
-        if (policy.activation_mode === displayPolicy.value[i].activation_mode)
-        {
-          ddosProtected = true;
-        }
-      }
+      ddosProtected = utils.isProtected(policy.id, policy.activation_mode);
       if (!ddosProtected)
       {
         policyOutput += '<tr><td align="left"><span class="blackText">DDoS Activity</span></td> <td align="left"><span class="redText">' + policy.activation_mode_text + '</span></td></tr>\n';
@@ -766,8 +775,9 @@ function buildPolicyReport(site, isWebVolDDosPurchased)
       else
         policyOutput += '<tr><td align="left"><span class="blackText">DDoS Activity</span></td> <td align="left"><span class="greenText">' + policy.activation_mode_text + '</span></td></tr>\n';
     }
-    else if (policy.id === 'api.threats.bot_access_control')
+    else if (policy.id === 'api.threats.bot_access_control') //Special case using different parameters
     {
+      var displayPolicy = utils.getDisplayPolicy(policy.id);
       if (policy.block_bad_bots != displayPolicy.block_bad_bots)
       {
         policyOutput += '<tr><td align="left"><span class="blackText">Bot Access Control</span></td> <td><span class="redText">Ignore</span></td></tr>\n';
@@ -777,8 +787,8 @@ function buildPolicyReport(site, isWebVolDDosPurchased)
       }
       else
         policyOutput += '<tr><td align="left"><span class="blackText">Bot Access Control</span></td> <td><span class="greenText">Block Request</span></td></tr>\n';
-
-      if (policy.challenge_suspected_bots != displayPolicy.challenge_suspected_bots)
+      //Special case as there is no text in the response.
+      if (policy.challenge_suspected_bots == true)
         policyOutput += '<tr><td align="left">Challenge Suspected Bots</td> <td><span class="orangeText">Captcha Challenge</span></td></tr>\n';
       else
       {
@@ -791,7 +801,8 @@ function buildPolicyReport(site, isWebVolDDosPurchased)
     }
     else
     {
-      if (policy.action != displayPolicy.action)
+      isProtected = utils.isProtected(policy.id, policy.action);
+      if (!isProtected)
       {
         policyOutput += '<tr><td align="left"><span class="blackText">' + policy.name + '</span></td> <td><span class="redText">' + policy.action_text + '</span></td></tr>\n';
         setSecurityIssue(site.domain.name, "policy", policy.name,  policy.action_text);
@@ -802,7 +813,7 @@ function buildPolicyReport(site, isWebVolDDosPurchased)
           siteSummary.crossSiteScripting = "N";
         else if (policy.id === "api.threats.illegal_resource_access")
           siteSummary.illegalResourceAccess = "N";
-        else if (policy.id === "api.threats.api.threats.backdoor")
+        else if (policy.id === "api.threats.backdoor")
           siteSummary.backDoorProtection = "N";
         else if (policy.id === "api.threats.remote_file_inclusion")
           siteSummary.remoteFileInclusion = "N";
