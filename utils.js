@@ -15,7 +15,7 @@ function saveToFile(filename, data)
 
 function getDisplayPolicy(id)
 {
-  policy = settings.defaultProtectionDisplayPolicy1;
+  policy = settings.defaultProtectionDisplayPolicy;
   var found = false;
   for (var i = 0; i < settings.protectionDisplay.length; i++)
   {
@@ -47,9 +47,6 @@ function isProtected(id, value)
   }
   return (isProtected);
 }
-
-
-
 
 
 module.exports.saveToFile = saveToFile;

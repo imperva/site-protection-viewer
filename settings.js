@@ -95,7 +95,7 @@ module.exports = Object.freeze({
 		}
 	],
 
-	defaultProtectionDisplayPolicy: {"value" : [{"isProtected" : "api.threats.action.block_request"}]}, //This is used if specific action was not set in protectionDisplay
+	defaultProtectionDisplayPolicy: {"value" : [{"isProtected" : "api.threats.action.block_request"}], "id": "defaultProtection_id"}, //This is used if specific action was not set in protectionDisplay
 
 
 	printDebugInfo: false,
@@ -106,7 +106,7 @@ module.exports = Object.freeze({
 	originServerConnectionTimeout: 10000, //(In milliseconds)
 
 //Internal usage	
-	version: "1.6",
+	version: "1.7",
 	pageSize: 100
 
 });

@@ -73,11 +73,12 @@ function getAccountSubInfo(commonPostData, accountId, accountSubInfoOutput, info
 
 		informCaller();
 	})
-	.catch(function (err) {
+	//Removed catch clause for better debug
+//	.catch(function (err) {
 		// Deal with the error
-		console.log("error in getting account subscription info " + err);
-		informCaller();
-	})
+//		console.log("error in getting account subscription info " + err);
+//		informCaller();
+//	})
 }
 
 

@@ -29,8 +29,8 @@ var genericPostData = {
 };
 
 /**/ 
- var appVersion = 1.6;
- var requiredSettingsVersion = 1.6;
+ var appVersion = 1.7;
+ var requiredSettingsVersion = 1.7;
 /**/
 
 //Colored html status
@@ -778,7 +778,7 @@ function buildPolicyReport(site, isWebVolDDosPurchased)
     else if (policy.id === 'api.threats.bot_access_control') //Special case using different parameters
     {
       var displayPolicy = utils.getDisplayPolicy(policy.id);
-      if (policy.block_bad_bots != displayPolicy.block_bad_bots)
+      if ((policy.id != displayPolicy.id) || (policy.block_bad_bots != displayPolicy.block_bad_bots)) //If returned policy id is not the same (meaning default was returned), act as not protected, this is just a precaution if settings file is corrupt
       {
         policyOutput += '<tr><td align="left"><span class="blackText">Bot Access Control</span></td> <td><span class="redText">Ignore</span></td></tr>\n';
         setSecurityIssue(site.domain, "policy", "Bot Access Control", policy.block_bad_bots);
