@@ -7,7 +7,7 @@ The tool can be used with it's default settings or if needed, user may change th
 # Usage
 ## Installation
 1. Install [nodejs](https://nodejs.org/en/download/) 
-   **Note:** nodejs version must be lower than 12 do to issue listed [here](https://github.com/nodejs/node/issues/27711).
+   **Note:** nodejs version must be lower than 12 due to issue listed [here](https://github.com/nodejs/node/issues/27711).
 2. Download the project files from the github repository and save them locally in a directory of your choice (aka project directory).
 3. In the project directory open a command prompt and run 'npm install'
 ## Configuration
