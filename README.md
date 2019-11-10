@@ -7,7 +7,6 @@ The tool can be used with it's default settings or if needed, user may change th
 # Usage
 ## Installation
 1. Install [nodejs](https://nodejs.org/en/download/) 
-   **Note:** nodejs version must be lower than 12 due to issue listed [here](https://github.com/nodejs/node/issues/27711).
 2. Download the project files from the github repository and save them locally in a directory of your choice (aka project directory).
 3. In the project directory open a command prompt and run 'npm install'
 ## Configuration
@@ -32,7 +31,9 @@ The tool can be used with it's default settings or if needed, user may change th
    - **originServerConnectionTimeout** - (default 10000 miliseconds) Timeout for connection request to origin-server. Note that if the number is too low it may cause timeout before server actually responds which implies server is protected
    
 ## Run tool
-5.  In the project directory run command: 'node spv'
+5.  In the project directory run the following command in command line: 
+- **node version <12** - *node spv*.
+- **node version >=12** - *node --http-parser=legacy spv.js* due to issue listed [here](https://github.com/nodejs/node/issues/27711)
 6.  Output files can be found in the configured filePath
 
 # Dependancies
