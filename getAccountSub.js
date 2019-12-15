@@ -53,6 +53,7 @@ function getAccountSubInfo(commonPostData, accountId, accountSubInfoOutput, info
 	request(options)
 	.then(function (response) {
 		var isWebVolDDosPurchased = false;
+		var isAttackAnalyticsPurchased = false;
 		var jResponse = JSON.parse(response);
 		if (jResponse.res != 0)
         {
@@ -68,8 +69,15 @@ function getAccountSubInfo(commonPostData, accountId, accountSubInfoOutput, info
 				if (jResponse.planStatus.additionalServices.planSectionRows[i].purchased != "None")
 					isWebVolDDosPurchased = true;
 			}
+			if (jResponse.planStatus.additionalServices.planSectionRows[i].name == "Web Attack Analytics")
+			{
+				if (jResponse.planStatus.additionalServices.planSectionRows[i].purchased != "0")
+					isAttackAnalyticsPurchased = true;
+			}
 		}
-		accountSubInfoOutput.push({"accountId": jResponse.planStatus.accountId, "accountName": jResponse.planStatus.accountName, "isWebVolDDosPurchased": isWebVolDDosPurchased});
+		accountSubInfoOutput.push({"accountId": jResponse.planStatus.accountId, "accountName": jResponse.planStatus.accountName, 
+									"isWebVolDDosPurchased": isWebVolDDosPurchased,
+									"isAttackAnalyticsPurchased": isAttackAnalyticsPurchased});
 
 		informCaller();
 	})

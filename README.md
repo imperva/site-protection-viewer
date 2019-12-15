@@ -16,13 +16,16 @@ The tool can be used with it's default settings or if needed, user may change th
    - **apiKey** (mandatory) - Your API_KEY which you can generate as described in the [API Key Management](https://docs.incapsula.com/Content/management-console-and-settings/api-keys.htm) page
    - **checkOriginServers** (default true)- *true* if you want to check origin server access, running of the tool will take longer, depending on number of origin servers; *false* if you don't
    - **getSubAccountsInfo** (default true)- *true* if you want to get sub account names, running of the tool will take longer, depending on number of origin servers; *false* if you don't
+   - **getAttackAnalyticsInfo** (default true)- *true* When set to true Attack Analytics info is also displayed if licensed. This may take a longer time. When set to true, getSubAccountsInfo must also be true
    - **showFullDetails** (default false) - *true* - provides a table per website with detailed information
+   - **useLegacyDisplay** (default false) - *true* html display will be as was before version 2 of the tool
    - **title** (default name of account) - the title of the web page
    - **fileName** (default name of account) - the filename
    - **filePath** (default project directory)- Where the files will be saved. Directory must be created prior to running the tool
    - **addTimestamp** (default false) - *true* if you want to have the timestamp attached to the filenames. Without this each time the tool is run the output files will be overridden
    - **saveCsv** (default true) - *true* if you want a csv file as well as an html file
    - **originServerFileNamePrefix** (default 'Origin-servers') - String used as prefix for origin server csv file
+   - **attackAnalyticsFileNamePrefix** (default 'Attack-Analytics') - String used as prefix for Attack Analytics csv file
    - **originServerProtectedCode** When origin servers are checked, if one of these codes is returned, it implies that the origin server was NOT reached - it is protected
    - **protectionDisplay** - Use these settings to control the display of whether a setting is considered protected or not.
    - **printDebugInfo** - (default false) - *true* to print debug info during execution	

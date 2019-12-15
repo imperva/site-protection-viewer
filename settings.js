@@ -1,12 +1,15 @@
 module.exports = Object.freeze({
 	//Configuration
+
 	accountId: "", // Your account ID - Mandatory
 	apiId: "", // Your api id - Mandatory
 	apiKey: "",  // Your api key - Mandatory
+	
 	checkOriginServers: true, // When set to true, origin servers protection will be validated, this may take a longer time
-	getSubAccountsInfo:true, // When set to true, Sub accounts are also listed, this may take a longer time
-	showFullDetails: false, // When set to true, the setting details are listed per site
-
+	getSubAccountsInfo: true, // When set to true, Sub accounts are also listed, this may take a longer time
+	getAttackAnalyticsInfo: true, // When set to true Attack Analytics info is also displayed if licensed. This may take a longer time. When set to true, getSubAccountsInfo must also be true
+	showFullDetails: false, // When set to true, the setting details are listed per site. 
+	useLegacyDisplay: false, // When set to true, html display will be as was before version 2 of this tool.
 
 	title: "", //When empty string it will use the account name as defined in MY
 
@@ -16,6 +19,7 @@ module.exports = Object.freeze({
 	addTimestamp: false, // Set to true if you want timestamp appended to the filename
 	saveCsv: true, // Set to true if you want csv files as well as the html file
 	originServerFileNamePrefix: "", // When empty string will use 'Origin-servers' String used as prefix for origin server csv file
+	attackAnalyticsFileNamePrefix: "", // When empty string will use 'Attack-Analytics' String used as prefix for Attack Analytics csv file
 
 // Advanced configuration
 	//When origin servers are checked, if one of these codes is returned, it implies that the origin server was NOT reached - it is protected
@@ -106,7 +110,7 @@ module.exports = Object.freeze({
 	originServerConnectionTimeout: 10000, //(In milliseconds)
 
 //Internal usage	
-	version: "1.7",
+	version: "2.0",
 	pageSize: 100
 
 });
