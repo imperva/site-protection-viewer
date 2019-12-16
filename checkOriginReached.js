@@ -98,7 +98,7 @@ function addOriginInfoToSite(subAccountId, siteId, siteName, serverName, protoco
 	var notFound = true;	
 	for (var i=0; i<origDataOutpt.length; i++)
 	{
-		if (origDataOutpt[i].domain == siteName)
+		if (origDataOutpt[i].siteId == siteId)
 		{
 			origDataOutpt[i].originServers.push({"serverName": serverName, "protocol": protocol, "isProtected": isProtected, "code": code})
 			notFound = false;

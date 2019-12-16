@@ -31,7 +31,7 @@ var genericPostData = {
 };
 
 /**/ 
- var appVersion = 2.0;
+ var appVersion = "2.0.1";
  var requiredSettingsVersion = 2.0;
 /**/
 
