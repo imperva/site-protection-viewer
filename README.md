@@ -47,6 +47,9 @@ The tool can be used with it's default settings or if needed, user may change th
   - request
   - request-promise
   
+# Example 
+![alt text](https://github.com/imperva/site-protection-viewer/blob/master/images/spv-screenshot.JPG)
+
 # Contributions & Bug reports
 ## Contribution
 - You can create your own branch and add features, fix bugs.
