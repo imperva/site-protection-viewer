@@ -11,6 +11,8 @@ module.exports = Object.freeze({
 	showFullDetails: false, // When set to true, the setting details are listed per site. 
 	useLegacyDisplay: false, // When set to true, html display will be as was before version 2 of this tool.
 
+	attackAnalyticsPeriodInDays: 0, //How many days back should info be provided? E.g. 'Last n Days' 0 = All.
+
 	title: "", //When empty string it will use the account name as defined in MY
 
 //File
@@ -110,7 +112,7 @@ module.exports = Object.freeze({
 	originServerConnectionTimeout: 10000, //(In milliseconds)
 
 //Internal usage	
-	version: "2.0",
+	version: "2.1",
 	pageSize: 100
 
 });

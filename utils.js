@@ -9,7 +9,7 @@ function saveToFile(filename, data)
       console.log("Error: " + err.message)
       return// console.log(err);
     }
-    console.log("Results saved to " + filename);
+    console.log("\nResults saved to " + filename);
   });
 }
 

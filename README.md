@@ -19,6 +19,7 @@ The tool can be used with it's default settings or if needed, user may change th
    - **getAttackAnalyticsInfo** (default true)- *true* When set to true Attack Analytics info is also displayed if licensed. This may take a longer time. When set to true, getSubAccountsInfo must also be true
    - **showFullDetails** (default false) - *true* - provides a table per website with detailed information
    - **useLegacyDisplay** (default false) - *true* html display will be as was before version 2 of the tool
+   - **attackAnalyticsPeriodInDays** (default 0) - How many days back should info be provided? E.g. 'Last n Days' 0 = All
    - **title** (default name of account) - the title of the web page
    - **fileName** (default name of account) - the filename
    - **filePath** (default project directory)- Where the files will be saved. Directory must be created prior to running the tool

@@ -22,6 +22,8 @@ var fileName;
 var pageSize = 100;
 var timeNow = dateTime.create();
 
+
+
 //This information is used for calling different APIs
 var genericPostData = {
   api_id: settings.apiId,
@@ -31,8 +33,8 @@ var genericPostData = {
 };
 
 /**/ 
- var appVersion = "2.0.1";
- var requiredSettingsVersion = 2.0;
+ var appVersion = "2.1";
+ var requiredSettingsVersion = 2.1;
 /**/
 
 //Colored html status
@@ -244,7 +246,7 @@ function getSitesInfo(commonPostData, siteData, originsData, informCaller)
       function(callback) {
         //Get Attack Analytics Info
         if (getAttackAnalyticsInfo)
-          getAaInfo.getAAInfoList(commonPostData, subAccountIds, aASubAccountOutput, callback);
+          getAaInfo.getAAInfoList(timeNow, commonPostData, subAccountIds, aASubAccountOutput, callback);
         else
           callback();
       },
@@ -264,45 +266,72 @@ function getSitesInfo(commonPostData, siteData, originsData, informCaller)
 function buildHtmlSummaryTable(isWebVolDDosPurchased)
 {
   var output = '<h2><a name="AccountProtectionSettings">Protection Settings</a></h2>\n';
-
-  output += '<table>\n';
   var statusString;
   var hasTrafficString;
   statusString = "Fully Configured";
   hasTrafficString = '';
-  output += '<tr>';
+
+  var settingsSummary = {"totalSites": 0, "origNotProtected": 0, "totalNotProtected": 0, "totalNotConfigured": 0};
+  
+  var tableOutput = '<table>\n';
+  tableOutput += '<tr>';
 
 
   if (getSubAccountsInfo)
-    output += '<th align="left">Account</th>';
+    tableOutput += '<th align="left">Account</th>';
     
-  output += '<th align="left">Site</th><th align="left">' + statusString + hasTrafficString + '<th align="left">Block Bad Bots</th><th align="left">Challenge Suspected Bots</th><th align="left">Backdoor Protection</th>' +
+  tableOutput += '<th align="left">Site</th><th align="left">' + statusString + hasTrafficString + '<th align="left">Block Bad Bots</th><th align="left">Challenge Suspected Bots</th><th align="left">Backdoor Protection</th>' +
     '<th align="left">Remote File Inclusion</th><th align="left">SQL Injection</th><th align="left">Cross Site Scripting</th><th align="left">Ilegal Resource Access</th>' +
     '<th align="left">DDoS Activity</th><th align="left">Volumetric DDoS</th>';
     
   //If checking orig servers
   if (checkOriginServers)
-    output += '<th align="left">Origin Server Protected</th></tr>\n';
+    tableOutput += '<th align="left">Origin Server Protected</th></tr>\n';
   else
-    output += '</tr>\n';
+    tableOutput += '</tr>\n';
 
   for (var i = 0; i < siteSummaryObject.length; i++)
   {
-    output += buildHtmlSumRow(siteSummaryObject[i]);
+    tableOutput += buildHtmlSumRow(siteSummaryObject[i], settingsSummary);
   }
 
-  output += '</table>';
+  tableOutput += '</table>';
 
-  return output;
+  output += '<p><b>Number of fully configured sites: </b>' + (settingsSummary.totalSites - settingsSummary.totalNotConfigured) + 
+    ' out of ' + settingsSummary.totalSites + '</p>\n';
+
+  output += '<p><b>Number of fully protected sites: </b>' + (settingsSummary.totalSites - settingsSummary.totalNotConfigured - settingsSummary.totalNotProtected) + 
+  ' out of ' + (settingsSummary.totalSites - settingsSummary.totalNotConfigured) + '</p>\n';
+
+  if (checkOriginServers)
+  {
+    output += '<p><b>Number of sites with protected origin-server:</b> ' + (settingsSummary.totalSites - settingsSummary.totalNotConfigured - settingsSummary.origNotProtected) + 
+    ' out of ' + (settingsSummary.totalSites - settingsSummary.totalNotConfigured) + '</p>\n'; 
+  }
+  else
+  {
+    output += '<p><b>Origin servers were not checked and their status not taken into account! </b></p>\n';
+  }
+
+
+  output += tableOutput;
+
+  return (output);
 }
 
 
-function buildHtmlSumRow(siteSummaryObject)
+function buildHtmlSumRow(siteSummaryObject, settingsSummary)
 {
   var output;
   var dispalyAccountName = "";
   var wafConfigUrl = 'https://my.incapsula.com/sites/settings?isolated=true&accountId=' + siteSummaryObject.accountId + '&extSiteId=' + siteSummaryObject.siteId + '&fragment=section%3Dsettings_section_threats#section=settings&settings_section=settings_section_threats';
   var accountUrl = 'https://my.incapsula.com/sites?accountId=' + siteSummaryObject.accountId;
+  var isFullyProtected = true;
+  var isFullyConfigured = true;
+  var isFullyConfigured = true;
+  var isOriginProtected = true;
+  
+  settingsSummary.totalSites++;
 
   output = '<tr>' 
   if (getSubAccountsInfo)
@@ -317,50 +346,79 @@ function buildHtmlSumRow(siteSummaryObject)
   
   output += '<td align="left"><a href="' + wafConfigUrl + '">' + siteSummaryObject.site + '</a></td>';    
 
+  //Fully configured
   if (siteSummaryObject.status == statusOkString)
     output += htmlYStr;
   else 
-     output += htmlNStr;
+  {
+    isFullyConfigured = false;
+    output += htmlNStr;
+  }
+     
 
   if (siteSummaryObject.blockBadBots == 'Y')
     output += htmlVStr;
   else
-    output += htmlXStr;
+  {
+    isFullyProtected = false;
+    output += htmlNStr;
+  }
 
   if (siteSummaryObject.challengeSuspected == 'Y')
     output += htmlVStr;
   else
-    output += htmlXStr;
+  {
+    isFullyProtected = false;
+    output += htmlNStr;
+  }
 
   if (siteSummaryObject.backDoorProtection == 'Y')
     output += htmlVStr;
   else
-    output += htmlXStr;
+  {
+    isFullyProtected = false;
+    output += htmlNStr;
+  }
 
   if (siteSummaryObject.remoteFileInclusion == 'Y')
     output += htmlVStr;
   else
-    output += htmlXStr;
+  {
+    isFullyProtected = false;
+    output += htmlNStr;
+  }
 
   if (siteSummaryObject.sqlInjection == 'Y')
     output += htmlVStr;
   else
-    output += htmlXStr;
+  {
+    isFullyProtected = false;
+    output += htmlNStr;
+  }
 
     if (siteSummaryObject.crossSiteScripting == 'Y')
     output += htmlVStr;
   else
-    output += htmlXStr;
+  {
+    isFullyProtected = false;
+    output += htmlNStr;
+  }
 
   if (siteSummaryObject.illegalResourceAccess == 'Y')
     output += htmlVStr;
   else
-    output += htmlXStr;
+  {
+    isFullyProtected = false;
+    output += htmlNStr;
+  }
 
   if (siteSummaryObject.ddosActivityMode == 'Y')
     output += htmlVStr;
   else
-    output += htmlXStr;
+  {
+    isFullyProtected = false;
+    output += htmlNStr;
+  }
 
   if (siteSummaryObject.isWebVolDDosPurchased == 'Y')
     output += htmlVStr;
@@ -372,12 +430,25 @@ function buildHtmlSumRow(siteSummaryObject)
     if (siteSummaryObject.origServerProtected == 'Y')
       output += htmlVStr;
     else
-      output += htmlXStr;
+    {
+      isFullyProtected = false;
+      output += htmlNStr;
+      isOriginProtected = false;
+    }
   }
 
+  if (isFullyConfigured == false)
+      settingsSummary.totalNotConfigured++;
+  else
+  { //Total not protected only relevant if site is fully configured
+    if (isFullyProtected == false)
+      settingsSummary.totalNotProtected += 1;
+    if (isOriginProtected == false)
+      settingsSummary.origNotProtected += 1;
+  }
   output += '</tr>\n';
   
-  return output;
+  return (output);
 }
 
 function setHasTrafficInHtmlSummaryTable(domain, hasTraffic)
@@ -411,9 +482,9 @@ function buildHtml(siteData, originServersInfo, mainAccountInfo, subAccountsOutp
   output += '<title>' + theTitle + ' - Report </title>\n'
   output += '<style> table, th, td {border: 1px solid black; border-collapse: collapse;} .redText { color:red; } .blackText { color:black; } .greenText { color:green; } .brownText { color:brown; } .orangeText { color:orange; }</style>\n'
   output += '<body>\n';
-  output += '<h1>' + theTitle + ' - (Account ID ' + accountId + ') - ' + timeNow.format('Y-m-d H:M:S') + '</h1>\n'
+  output += '<h1>' + theTitle + ' - (Account ID ' + accountId + ') - ' + timeNow.format('d-f-Y H:M:S') + '</h1>\n'
 
-  output += '<p> Number of sites : ' + siteData.sites.length + '<\p>\n';
+  output += '<p><b> Number of sites : ' + siteData.sites.length + '</b><\p>\n';
   if (getAttackAnalyticsInfo)
     output += '<a href="#AccountIncidentsSummary">Incidents Summary<\a><br>\n';
   output += '<a href="#AccountProtectionSettings">Protection Settings<\a><br>\n';

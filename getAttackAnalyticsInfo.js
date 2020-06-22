@@ -5,14 +5,14 @@ var settings = require('./settings.js');
 var utils = require("./utils");
 var spv = require('./spv.js');
 
-function getAAInfoList(commonPostData, accountList, aASubAccountOutput, informCaller)
+function getAAInfoList(timeNow, commonPostData, accountList, aASubAccountOutput, informCaller)
 {
 	totalNumAccounts = accountList.length;
 	if(settings.printDebugInfo)
 		console.time("Get account info - total time");
 
 	async.forEachLimit(accountList, settings.numConcurrentConnections, function(account, cb){
-		getAaAccountInfo(commonPostData, account.accountId, aASubAccountOutput, cb);
+		getAaAccountInfo(timeNow, commonPostData, account.accountId, aASubAccountOutput, cb);
 	}, function(err){
 		if (err){
 			//deal with the error
@@ -27,10 +27,14 @@ function getAAInfoList(commonPostData, accountList, aASubAccountOutput, informCa
 }
 
 
-function getAaAccountInfo(commonPostData, accountId, aAAccountOutput, informCaller)
+function getAaAccountInfo(timeNow, commonPostData, accountId, aAAccountOutput, informCaller)
 {
+	var dayInMs = 86400000;
 	var urlString = 'https://api.imperva.com/analytics/v1/incidents?caid=' + accountId +
 		'&api_key=' + commonPostData.api_key + '&api_id=' + commonPostData.api_id;
+	
+	if (settings.attackAnalyticsPeriodInDays != 0)
+		urlString += '&from_timestamp=' + (timeNow._created - (dayInMs * settings.attackAnalyticsPeriodInDays));
 
 // form data
 	var options = {
@@ -114,14 +118,24 @@ function setSubAccountAaInfo(accountId, aAPaylod, aAAccountOutput)
 
 function buildAaReport(isAttackAnalyticsPurchased, aASubAccountInfo, mainAccountInfo, subAccountsOutput)
 {
+	
 	var aAOutput = '\n<h2><a name="AccountIncidentsSummary">Incidents Summary (Attck Analytics)</a></h2>\n';
+	var lastDayCaption;
 	var curAccountName = '';
 	var strCritical = '';
 	var strMajor = '';
 	var strMinor = '';
-	var aAUrl = 'https://console.imperva.com/analytics/ui/incidents?caid=';
+	var aAUrl = 'https://my.imperva.com/attack-analytics/ui/incidents?accountId='
 
-	
+	if (settings.attackAnalyticsPeriodInDays == 0)
+		lastDayCaption = 'All';
+	else if (settings.attackAnalyticsPeriodInDays == 1)
+		lastDayCaption = 'Last 1 Day';
+	else 
+		lastDayCaption = 'Last ' + settings.attackAnalyticsPeriodInDays + ' Days';
+
+	aAOutput = '\n<h2><a name="AccountIncidentsSummary">' + lastDayCaption + ' Incidents Summary (Attack Analytics)</a></h2>\n';
+
 	if (isAttackAnalyticsPurchased)
 	{
 
