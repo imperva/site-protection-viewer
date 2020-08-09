@@ -33,8 +33,8 @@ var genericPostData = {
 };
 
 /**/ 
- var appVersion = "2.1";
- var requiredSettingsVersion = 2.1;
+ var appVersion = "2.2";
+ var requiredSettingsVersion = 2.2;
 /**/
 
 //Colored html status
@@ -206,8 +206,10 @@ function buildHtmlReport(commonPostData, siteData)
     // Setting data for all sites to check origin server protection for http and https
     for (var j=0; j <  siteData.sites[i].ips.length; j++)
     {
-      originsData.push({'subAccountId':siteData.sites[i].account_id, 'siteId':  siteData.sites[i].site_id, 'Name':  siteData.sites[i].domain, 'Protocol': 'https', 'serverName': siteData.sites[i].ips[j]});
-      originsData.push({'subAccountId':siteData.sites[i].account_id, 'siteId':  siteData.sites[i].site_id,'Name':  siteData.sites[i].domain, 'Protocol': 'http', 'serverName': siteData.sites[i].ips[j]});
+      originsData.push({'subAccountId':siteData.sites[i].account_id, 'siteId':  siteData.sites[i].site_id, 'Name':  siteData.sites[i].domain, 'Protocol': 'https', 'portNum': '443', 'serverName': siteData.sites[i].ips[j]});
+      originsData.push({'subAccountId':siteData.sites[i].account_id, 'siteId':  siteData.sites[i].site_id, 'Name':  siteData.sites[i].domain, 'Protocol': 'https', 'portNum': '8443', 'serverName': siteData.sites[i].ips[j]});
+      originsData.push({'subAccountId':siteData.sites[i].account_id, 'siteId':  siteData.sites[i].site_id,'Name':  siteData.sites[i].domain, 'Protocol': 'http', 'portNum': '80','serverName': siteData.sites[i].ips[j]});
+      originsData.push({'subAccountId':siteData.sites[i].account_id, 'siteId':  siteData.sites[i].site_id,'Name':  siteData.sites[i].domain, 'Protocol': 'http', 'portNum': '8080','serverName': siteData.sites[i].ips[j]});
     }
 
     addSubAccountIdId(siteData.sites[i].account_id)
@@ -286,7 +288,7 @@ function buildHtmlSummaryTable(isWebVolDDosPurchased)
     
   //If checking orig servers
   if (checkOriginServers)
-    tableOutput += '<th align="left">Origin Server Protected</th></tr>\n';
+    tableOutput += '<th align="left">Origin Server Protected <small>(No direct access)</small></th></tr>\n';
   else
     tableOutput += '</tr>\n';
 
@@ -305,7 +307,7 @@ function buildHtmlSummaryTable(isWebVolDDosPurchased)
 
   if (checkOriginServers)
   {
-    output += '<p><b>Number of sites with protected origin-server:</b> ' + (settingsSummary.totalSites - settingsSummary.totalNotConfigured - settingsSummary.origNotProtected) + 
+    output += '<p><b>Number of sites with protected origin-server (no direct access):</b> ' + (settingsSummary.totalSites - settingsSummary.totalNotConfigured - settingsSummary.origNotProtected) + 
     ' out of ' + (settingsSummary.totalSites - settingsSummary.totalNotConfigured) + '</p>\n'; 
   }
   else

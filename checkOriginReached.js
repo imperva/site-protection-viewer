@@ -18,13 +18,14 @@ var printDebugInfo = settings.printDebugInfo;
 //Getting arguments
 function getOriginServerInfo(originData, originDataOutpt, informCaller)
 {
-	console.log("Check " + originData.length/2 + " Origin Servers access (http & https) - this may take a while");
+	console.log("Check " + originData.length/4 + " Origin Servers access (http & https) - this may take a while");
 	totalNumServers = originData.length;
 	if(printDebugInfo)
 		console.time("Check Origin Servers - total time");
 
+    
 	async.forEach(originData, function(site, cb){
-		checkOriginServer(site.subAccountId, site.siteId, site.Name, site.serverName, site.Protocol, originDataOutpt, cb);
+		checkOriginServer(site.subAccountId, site.siteId, site.Name, site.serverName, site.Protocol, site.portNum, originDataOutpt, cb);
 	}, function(err){
 		if (err){
 			//deal with the error
@@ -38,13 +39,12 @@ function getOriginServerInfo(originData, originDataOutpt, informCaller)
 	});
 }
 
-function checkOriginServer(subAccountId, siteId, siteName, serverNamesList, protocol, origDataOutpt, siteCb)
+function checkOriginServer(subAccountId, siteId, siteName, serverNamesList, protocol, portNum, origDataOutpt, siteCb)
 {
 	var serverNames = serverNamesList.split(';'); // split string on comma space
-
 	async.forEach(serverNames, function(serverName, cb){
 		serverNameIndex++
-		checkIfReachable(serverNameIndex, subAccountId, siteId, siteName, serverName, protocol, origDataOutpt, cb);
+		checkIfReachable(serverNameIndex, subAccountId, siteId, siteName, serverName, protocol, portNum, origDataOutpt, cb);
 	}, function(err){
 		if (err){
 			//deal with the error
@@ -54,9 +54,11 @@ function checkOriginServer(subAccountId, siteId, siteName, serverNamesList, prot
 	});
 }
 
-function checkIfReachable(index, subAccountId, siteId, siteName, serverName, protocol, origDataOutpt, cb)
+function checkIfReachable(index, subAccountId, siteId, siteName, serverName, protocol, portNum, origDataOutpt, cb)
 {
-RequestUrl = protocol + '://' + serverName;
+RequestUrl = protocol + '://' + serverName + ':' + portNum;
+if(printDebugInfo)
+  console.log(RequestUrl)
 var result;
 if(printDebugInfo)
 	console.log("Check if " + serverName + " is reachable");
@@ -65,9 +67,9 @@ request({ url: RequestUrl, method: "GET", followRedirect: false, timeout:setting
 	{
 		var isProtected = false;
 		if(printDebugInfo)
-			console.log("origin server # " + totalNumServers-- + " Server answered: " + serverName)
-			
-		if (err)
+			console.log("origin server # " + totalNumServers-- + " Server answered: " + serverName + " " + protocol + " " + portNum)
+
+    if (err)
 		{
 			//Protected Only if error code is in list, else it means origin server is reachable
 			for (var i = 0; i < settings.originServerProtectedCode.length; i++)
@@ -76,37 +78,50 @@ request({ url: RequestUrl, method: "GET", followRedirect: false, timeout:setting
 				{
 					isProtected = true;
 					break;
-				}
-			}
-			if (isProtected == true)
-				addOriginInfoToSite(subAccountId, siteId, siteName, serverName, protocol, true, err.code, origDataOutpt);
-			else
-			{
-				if (!err.code)
-					err.code = err.reason;
-				addOriginInfoToSite(subAccountId, siteId, siteName, serverName, protocol, false, err.code, origDataOutpt);
-			}
-		}
-		else
-			addOriginInfoToSite(subAccountId, siteId, siteName, serverName, protocol, false, resp.statusCode, origDataOutpt);
-		cb();
-	});
+        }
+      }
+      if (isProtected == true)
+      {
+        addOriginInfoToSite(subAccountId, siteId, siteName, serverName, protocol, portNum, true, err.code, origDataOutpt);
+      }
+      else
+      {
+        if (!err.code)
+          err.code = err.reason;
+        addOriginInfoToSite(subAccountId, siteId, siteName, serverName, protocol, portNum, false, err.code, origDataOutpt);
+      }
+    }
+    else //No error, checking if http code is also considered "protected"
+    {
+      for (var i = 0; i < settings.originServerHttpProtectedCode.length; i++)
+      {
+        if (resp.statusCode == settings.originServerHttpProtectedCode[i])
+				{
+					isProtected = true;
+					break;
+				}        
+      }
+      addOriginInfoToSite(subAccountId, siteId, siteName, serverName, protocol, portNum, isProtected, resp.statusCode, origDataOutpt);
+    }            
+    cb();
+  });
 }	
 
-function addOriginInfoToSite(subAccountId, siteId, siteName, serverName, protocol, isProtected, code, origDataOutpt)
+function addOriginInfoToSite(subAccountId, siteId, siteName, serverName, protocol, portNum, isProtected, code, origDataOutpt)
 {
 	var notFound = true;	
 	for (var i=0; i<origDataOutpt.length; i++)
 	{
 		if (origDataOutpt[i].siteId == siteId)
 		{
-			origDataOutpt[i].originServers.push({"serverName": serverName, "protocol": protocol, "isProtected": isProtected, "code": code})
+			origDataOutpt[i].originServers.push({"serverName": serverName, "protocol": protocol, "portNum": portNum,  "isProtected": isProtected, "code": code})
 			notFound = false;
 			break;
 		}
 	}
 	if (notFound)
-		origDataOutpt.push({"isFullySorted": false, "isSorted": false, "subAccountId": subAccountId, "siteId": siteId, "domain": siteName,"originServers":[{"serverName": serverName,  "protocol": protocol, "isProtected": isProtected, "code": code}]})
+    origDataOutpt.push({"isFullySorted": false, "isSorted": false, "subAccountId": subAccountId, "siteId": siteId, "domain": siteName,
+        "originServers":[{"serverName": serverName,  "protocol": protocol, "portNum": portNum, "isProtected": isProtected, "code": code}]})
 }
 
 //Colored html status
@@ -138,18 +153,18 @@ function buildOriginServersReport(domain, sitesOriginServersInfo, siteSummaryObj
   if (origServers)
   {
     originServersOutput += '<table border="1">';
-    originServersOutput += '<tr><th align="left">Origin Server</th> <th align="left">Protocol</th><th align="left">Is Protected</th><th align="left">Code</th> </tr>\n';
+    originServersOutput += '<tr><th align="left">Origin Server</th> <th align="left">Protocol</th><th align="left">Is Protected <small>(No direct access)</small></th><th align="left">Code</th> </tr>\n';
     for (var i = 0; i < origServers.length; i++)
     {
       if (origServers[i].isProtected == true)
         originServersOutput += '<tr><td align="left">' + origServers[i].serverName + '</td>' +
-          '<td align="left">' + origServers[i].protocol + '</td>' + 
+          '<td align="left">' + origServers[i].protocol + ' (' + origServers[i].portNum + ')</td>' + 
           htmlYesStr +
          '<td align="left">' + origServers[i].code + '</td></tr>\n';
       else
       {
         originServersOutput += '<tr><td align="left">' + origServers[i].serverName + '</td>' +
-          '<td align="left">' + origServers[i].protocol + '</td>' + 
+          '<td align="left">' + origServers[i].protocol + ' (' + origServers[i].portNum + ')</td>' + 
           htmlNoStr +
           '<td align="left">' + origServers[i].code + '</td></tr>\n';
 
@@ -195,7 +210,7 @@ function buildOriginServerSummary(sitesOriginServersInfo, mainAccountInfo, subAc
   //Sort
   sitesOriginServersInfo = sortSiteOrigServers(sitesOriginServersInfo, mainAccountInfo, subAccountsOutput);
 
-  originServersOutput += '<th align="left">Site</th><th align="left">Origin Server</th><th align="left">Protocol</th><th align="left">Is Protected</th><th  align="left">Reason</th> </tr>\n';
+  originServersOutput += '<th align="left">Site</th><th align="left">Origin Server</th><th align="left">Protocol</th><th align="left">Is Protected <small>(No direct access)</small></th><th  align="left">Reason</th> </tr>\n';
  
   for (var i = 0; i < sitesOriginServersInfo.originServers.length; i++)
   {
@@ -231,7 +246,7 @@ function buildOriginServerSummary(sitesOriginServersInfo, mainAccountInfo, subAc
         originServerStatusStr = htmlNoStr; 
 
       originServersOutput += '<tr>' + domainStr + '<td align="left">' + sitesOriginServersInfo.originServers[i].originServers[j].serverName + '</td>' + 
-        '<td align="left">' + sitesOriginServersInfo.originServers[i].originServers[j].protocol + '</td>' + 
+        '<td align="left">' + sitesOriginServersInfo.originServers[i].originServers[j].protocol + ' (' + sitesOriginServersInfo.originServers[i].originServers[j].portNum + ')</td>' + 
          originServerStatusStr +  '<td align="left">' + sitesOriginServersInfo.originServers[i].originServers[j].code + '</td></tr>\n';                                                   
     }
   }
@@ -255,7 +270,7 @@ function createOriginServerCsv(fileName, sitesOriginServersInfo, mainAccountInfo
   //Sort
   sitesOriginServersInfo = sortSiteOrigServers(sitesOriginServersInfo, mainAccountInfo, subAccountsOutput);
   
-  csvFileOutput += 'Site,Origin Server,Protocol,Is Protected, Reason, Account ID, Site ID\r\n';
+  csvFileOutput += 'Site,Origin Server,Protocol, Port, Is Protected, Reason, Account ID, Site ID\r\n';
 
   for (var i = 0; i < sitesOriginServersInfo.originServers.length; i++)
   {
@@ -271,7 +286,8 @@ function createOriginServerCsv(fileName, sitesOriginServersInfo, mainAccountInfo
           csvFileOutput += sitesOriginServersInfo.originServers[i].accountName + ',';
         }
         csvFileOutput += sitesOriginServersInfo.originServers[i].domain + ',' +
-        sitesOriginServersInfo.originServers[i].originServers[j].serverName + ',' + sitesOriginServersInfo.originServers[i].originServers[j].protocol + ',';
+        sitesOriginServersInfo.originServers[i].originServers[j].serverName + ',' + sitesOriginServersInfo.originServers[i].originServers[j].protocol + ',' +
+        sitesOriginServersInfo.originServers[i].originServers[j].portNum + ',';
         
         //In order to write site only once per all origin servers
         if (sitesOriginServersInfo.originServers[i].originServers[j].isProtected == true)

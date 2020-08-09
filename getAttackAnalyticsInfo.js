@@ -9,7 +9,7 @@ function getAAInfoList(timeNow, commonPostData, accountList, aASubAccountOutput,
 {
 	totalNumAccounts = accountList.length;
 	if(settings.printDebugInfo)
-		console.time("Get account info - total time");
+		console.time("Get account AA info - total time");
 
 	async.forEachLimit(accountList, settings.numConcurrentConnections, function(account, cb){
 		getAaAccountInfo(timeNow, commonPostData, account.accountId, aASubAccountOutput, cb);
@@ -20,7 +20,7 @@ function getAAInfoList(timeNow, commonPostData, accountList, aASubAccountOutput,
 			informCaller();
 		}
 		if(settings.printDebugInfo)
-			console.timeEnd("Get account info - total time")
+			console.timeEnd("Get account AA info - total time")
 
 		informCaller();
 	});
