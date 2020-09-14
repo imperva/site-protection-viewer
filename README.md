@@ -29,7 +29,8 @@ The tool can be used with its default settings or if needed, user may change the
    - **originServerFileNamePrefix** (default 'Origin-servers') - String used as prefix for origin server csv file
    - **attackAnalyticsFileNamePrefix** (default 'Attack-Analytics') - String used as prefix for Attack Analytics csv file
    - **originServerProtectedCode** When origin servers are checked, if one of these codes is returned, it implies that the origin server was NOT reached - it is protected
-   - **originServerHttpProtectedCode** /When origin servers are checked, if an http code is returned, it implies that the origin server was NOT reached - it is protected
+   - **originServerHttpProtectedCode**  These ports will be scanned in the origin server check. You can add/remove per your need. Request will be with be http or https with set port number.
+   - **originServerPorts** When origin servers are checked, if an http code is returned, it implies that the origin server was NOT reached - it is protected
    - **protectionDisplay** - Use these settings to control the display of whether a setting is considered protected or not.
    - **printDebugInfo** - (default false) - *true* to print debug info during execution	
    - **numConcurrentConnections** - (default 15) - Number of concurrent open API sessions

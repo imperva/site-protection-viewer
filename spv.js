@@ -33,8 +33,8 @@ var genericPostData = {
 };
 
 /**/ 
- var appVersion = "2.2";
- var requiredSettingsVersion = 2.2;
+ var appVersion = "2.3";
+ var requiredSettingsVersion = 2.3;
 /**/
 
 //Colored html status
@@ -206,10 +206,13 @@ function buildHtmlReport(commonPostData, siteData)
     // Setting data for all sites to check origin server protection for http and https
     for (var j=0; j <  siteData.sites[i].ips.length; j++)
     {
-      originsData.push({'subAccountId':siteData.sites[i].account_id, 'siteId':  siteData.sites[i].site_id, 'Name':  siteData.sites[i].domain, 'Protocol': 'https', 'portNum': '443', 'serverName': siteData.sites[i].ips[j]});
-      originsData.push({'subAccountId':siteData.sites[i].account_id, 'siteId':  siteData.sites[i].site_id, 'Name':  siteData.sites[i].domain, 'Protocol': 'https', 'portNum': '8443', 'serverName': siteData.sites[i].ips[j]});
-      originsData.push({'subAccountId':siteData.sites[i].account_id, 'siteId':  siteData.sites[i].site_id,'Name':  siteData.sites[i].domain, 'Protocol': 'http', 'portNum': '80','serverName': siteData.sites[i].ips[j]});
-      originsData.push({'subAccountId':siteData.sites[i].account_id, 'siteId':  siteData.sites[i].site_id,'Name':  siteData.sites[i].domain, 'Protocol': 'http', 'portNum': '8080','serverName': siteData.sites[i].ips[j]});
+      for (var j=0; j <  siteData.sites[i].ips.length; j++)
+      {
+        for (var k=0; k < settings.originServerPorts.length; k++)
+        {
+          originsData.push({'subAccountId':siteData.sites[i].account_id, 'siteId':  siteData.sites[i].site_id, 'Name':  siteData.sites[i].domain, 'Protocol':  settings.originServerPorts[k].protocol, 'portNum': settings.originServerPorts[k].portNum, 'serverName': siteData.sites[i].ips[j]});
+        }    
+      }
     }
 
     addSubAccountIdId(siteData.sites[i].account_id)

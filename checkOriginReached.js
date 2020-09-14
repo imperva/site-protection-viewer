@@ -18,7 +18,7 @@ var printDebugInfo = settings.printDebugInfo;
 //Getting arguments
 function getOriginServerInfo(originData, originDataOutpt, informCaller)
 {
-	console.log("Check " + originData.length/4 + " Origin Servers access (http & https) - this may take a while");
+	console.log("Check " + originData.length/settings.originServerPorts.length + " Origin Servers access (http & https) - this may take a while");
 	totalNumServers = originData.length;
 	if(printDebugInfo)
 		console.time("Check Origin Servers - total time");

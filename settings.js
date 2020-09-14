@@ -40,6 +40,16 @@ module.exports = Object.freeze({
 	//	for example 403
 	],
 
+    /* These ports will be scanned in the origin server check. You can add/remove per your need. 
+        Request will be with be http or https with set port number.
+        */
+		originServerPorts: [
+			{"protocol": "http", "portNum" : 80},
+			{"protocol": "http", "portNum" : 8080},
+			{"protocol": "https", "portNum" : 443},
+			{"protocol": "https", "portNum" : 8443},
+		],
+
 	/* These settings will defines per rule if protected. Per rule (id). The received paramters values from the API are compared and if equal to 
 		the value of the parameter, it means it that the field will be displayed as 'protected'. 
 		Current values reflect the default settings when creating a new website.
@@ -118,7 +128,7 @@ module.exports = Object.freeze({
 	originServerConnectionTimeout: 10000, //(In milliseconds)
 
 //Internal usage	
-	version: "2.2",
+	version: "2.3",
 	pageSize: 100
 
 });
