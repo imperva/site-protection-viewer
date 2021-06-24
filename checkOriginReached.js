@@ -23,10 +23,18 @@ function getOriginServerInfo(originData, originDataOutpt, informCaller)
 	if(printDebugInfo)
 		console.time("Check Origin Servers - total time");
 
+    var numRequests = 0;
     
-	async.forEach(originData, function(site, cb){
-		checkOriginServer(site.subAccountId, site.siteId, site.Name, site.serverName, site.Protocol, site.portNum, originDataOutpt, cb);
-	}, function(err){
+    //Limit number of parallel requests as there is a limit in the Operating system
+    async.forEachLimit(originData, settings.originServerReqSize ,function(site, cb){    
+		  checkOriginServer(site.subAccountId, site.siteId, site.Name, site.serverName, site.Protocol, site.portNum, originDataOutpt, cb);
+      
+      //Let user know it is still working
+      if (numRequests % settings.originServerReqSize == 0)
+        console.log("Retrieving data...");
+      numRequests++;
+
+    }, function(err){
 		if (err){
 			//deal with the error
 			console.log("error in checking sites")

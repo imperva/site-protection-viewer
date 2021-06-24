@@ -37,7 +37,7 @@ module.exports = Object.freeze({
 	//When origin servers are checked, if an http code is returned, it implies that the origin server was NOT reached - it is protected.
 	// For example, we are aware that in several cases, http code 403 implies that actual server can't be accessed.
 	originServerHttpProtectedCode: [
-	//	for example 403
+		//403
 	],
 
     /* These ports will be scanned in the origin server check. You can add/remove per your need. 
@@ -128,9 +128,9 @@ module.exports = Object.freeze({
 	originServerConnectionTimeout: 10000, //(In milliseconds)
 
 //Internal usage	
-	version: "2.3",
-	pageSize: 100
-
+	version: "2.4",
+	pageSize: 100, 
+    originServerReqSize: 50 //Used for number of parallel requests to origin servers (due to limit of operating system)
 });
 
 	

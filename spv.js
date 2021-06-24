@@ -2,6 +2,7 @@ var https = require('https');
 var querystring = require('querystring');
 var fs = require('fs')
 var async = require('async');
+var util = require('util');
 var dateTime = require('node-datetime');
 var settings = require('./settings.js');
 
@@ -33,8 +34,8 @@ var genericPostData = {
 };
 
 /**/ 
- var appVersion = "2.3";
- var requiredSettingsVersion = 2.3;
+ var appVersion = "2.4";
+ var requiredSettingsVersion = 2.4;
 /**/
 
 //Colored html status
@@ -120,8 +121,6 @@ getAllData(genericPostData, accountId, 0);
 function getAllData(commonPostData, accountId, pageNum)
 {
   var postData = {};
-  postData.api_id = commonPostData.api_id;
-  postData.api_key = commonPostData.api_key;
   postData.page_num = pageNum;
   postData.account_id = accountId;
   postData.page_size = pageSize;
@@ -138,12 +137,15 @@ function getAllData(commonPostData, accountId, pageNum)
         path: '/api/prov/v1/sites/list',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
+          'x-API-Id': commonPostData.api_id, //Imperva Authorization
+          'x-API-Key': commonPostData.api_key, //Imperva Authorization
           'Content-Length': postData.length
         }
       };
-      
+    
     var req = https.request(options, function (res) {
     var result = '';
+    console.log("Retrieving data...");
     res.on('data', function (chunk) {
         result += chunk;
     });
@@ -153,7 +155,8 @@ function getAllData(commonPostData, accountId, pageNum)
         var jResult = JSON.parse(result);
         if (jResult.res != 0)
         {
-          console.log("Error retreiving information - " + jResult.res_message);
+          console.log("Error retreiving information");
+          console.log(util.inspect(jResult, {depth: null}));
           return;
         }
 

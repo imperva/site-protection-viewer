@@ -1,6 +1,7 @@
 var request = require('request-promise');
 var querystring = require('querystring');
 var async = require('async');
+var util = require('util');
 var settings = require('./settings.js');
 
 function getAccountSubInfoList(commonPostData, accountList, accountSubInfoOutput, informCaller)
@@ -28,8 +29,6 @@ function getAccountSubInfoList(commonPostData, accountList, accountSubInfoOutput
 function getAccountSubInfo(commonPostData, accountId, accountSubInfoOutput, informCaller)
 {
 	var postData = {};
-	postData.api_id = commonPostData.api_id;
-	postData.api_key = commonPostData.api_key;
 	postData.account_id = accountId;
 
 // form data
@@ -46,10 +45,11 @@ function getAccountSubInfo(commonPostData, accountId, accountSubInfoOutput, info
 		path: '/api/prov/v1/accounts/subscription',
 		headers: {
 			'Content-Type': 'application/x-www-form-urlencoded',
+            'x-API-Id': commonPostData.api_id,  //Imperva Authorization
+            'x-API-Key': commonPostData.api_key, //Imperva Authorization
 			'Content-Length': postData.length
 		},
 	}
-
 	request(options)
 	.then(function (response) {
 		var isWebVolDDosPurchased = false;
@@ -57,8 +57,10 @@ function getAccountSubInfo(commonPostData, accountId, accountSubInfoOutput, info
 		var jResponse = JSON.parse(response);
 		if (jResponse.res != 0)
         {
-          console.log("Error retreiving information - " + jResult.res_message);
-          return;
+		  console.log("Error retreiving information");
+		  console.log(util.inspect(jResponse, {depth: null}));
+		  return;
+		  
         }
 
 		// Get Volumetric DDoS purchase status

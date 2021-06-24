@@ -9,6 +9,7 @@
     "async": "^2.6.1",
     "node-datetime": "^2.0.6",
     "request": "^2.88.0",
-    "request-promise": "^4.2.2"
+    "request-promise": "^4.2.2",
+    "util": "^0.12.3"
   }
 }

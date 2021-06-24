@@ -30,8 +30,7 @@ function getAAInfoList(timeNow, commonPostData, accountList, aASubAccountOutput,
 function getAaAccountInfo(timeNow, commonPostData, accountId, aAAccountOutput, informCaller)
 {
 	var dayInMs = 86400000;
-	var urlString = 'https://api.imperva.com/analytics/v1/incidents?caid=' + accountId +
-		'&api_key=' + commonPostData.api_key + '&api_id=' + commonPostData.api_id;
+	var urlString = 'https://api.imperva.com/analytics/v1/incidents?caid=' + accountId
 	
 	if (settings.attackAnalyticsPeriodInDays != 0)
 		urlString += '&from_timestamp=' + (timeNow._created - (dayInMs * settings.attackAnalyticsPeriodInDays));
@@ -49,6 +48,8 @@ function getAaAccountInfo(timeNow, commonPostData, accountId, aAAccountOutput, i
 				},
 		path: '/api.imperva.com/analytics/v1/incidents',
 		headers: {
+            'x-API-Id': commonPostData.api_id, //Imperva Authorization 
+            'x-API-Key': commonPostData.api_key, //Imperva Authorization
 			'Content-Type': 'application/x-www-form-urlencoded'
 		},
 	}
