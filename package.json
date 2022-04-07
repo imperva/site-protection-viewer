@@ -6,7 +6,7 @@
   "license": "ISC",
   "description": "Package for the Imperva Site Protection Viewer",
   "dependencies": {
-    "async": "^2.6.1",
+    "async": "^3.2.2",
     "node-datetime": "^2.0.6",
     "request": "^2.88.0",
     "request-promise": "^4.2.2",
