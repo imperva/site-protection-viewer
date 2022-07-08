@@ -128,7 +128,7 @@ module.exports = Object.freeze({
 	originServerConnectionTimeout: 10000, //(In milliseconds)
 
 //Internal usage	
-	version: "2.4.1",
+	version: "2.4",
 	pageSize: 100, 
     originServerReqSize: 50 //Used for number of parallel requests to origin servers (due to limit of operating system)
 });
